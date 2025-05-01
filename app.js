@@ -1,8 +1,5 @@
 
-
-
-
-// --- Constantes y Estado Global ---
+        // --- Constantes y Estado Global ---
         const MONTHS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
         const FULL_MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
         const GASTOS_SHEET_NAME = "Gastos";
@@ -371,7 +368,7 @@
 
                      // --- Store Base for Expensa Real --- MODIFICADO
                      // If this is the primary cuota rubro AND the first detail, store its base values
-                     if (detail === CUOTA_RUBRO_NAME) {
+                     if (rubro === CUOTA_RUBRO_NAME && detail === detailOrder[0]) {
                          for (let i = 0; i < 12; i++){
                             calculated.cuotaRealBaseMes[i] = parseFloat(baseValues[i] || 0);
                          }
@@ -528,7 +525,7 @@
         // --- Actualización de la Interfaz (UI) ---
         function initUI() {
              document.getElementById('exercise-year')?.setAttribute('value', appState.currentYear);
-             document.getElementById('footer-year')?.textContent = new Date().getFullYear();
+             document.getElementById('footer-year').textContent = new Date().getFullYear();
              updateScenarioSelector(); // Populate selector based on loaded state
              updateCurrentYearAndScenarioInUI(); // Set initial text based on active scenario/year
         }
@@ -739,108 +736,168 @@
              updateCollapsibleTable('ingresos', scenarioData);
          }
 
-        
-function updateCollapsibleTable(type, scenarioData) {
-    console.log("updateCollapsibleTable called for:", type, "with data:", scenarioData.data[type]);
-const tableId = `${type}-detail-table`;
-    const table = document.getElementById(tableId);
-    if (!table) { console.warn(`Tabla ${tableId} no encontrada.`); return; }
+        function updateCollapsibleTable(type, scenarioData) {
+             const tableId = `${type}-detail-table`;
+             const table = document.getElementById(tableId);
+             if (!table) { console.warn(`Tabla ${tableId} no encontrada.`); return; }
 
-    const thead = table.querySelector('thead');
-    const tbody = table.querySelector('tbody');
-    const tfoot = table.querySelector('tfoot');
-    if (!thead || !tbody || !tfoot) { console.error(`Elementos internos de ${tableId} no encontrados.`); return; }
+             const thead = table.querySelector('thead');
+             const tbody = table.querySelector('tbody');
+             const tfoot = table.querySelector('tfoot');
 
-    // Header
-    const headerRow = thead.querySelector('tr');
-    headerRow.innerHTML = '<th>Rubro / Detalle</th>';
-    MONTHS.forEach(month => {
-        const th = document.createElement('th');
-        th.textContent = month;
-        th.classList.add('number-cell');
-        headerRow.appendChild(th);
-    });
-    const thTotal = document.createElement('th');
-    thTotal.textContent = "Total Anual";
-    thTotal.classList.add('number-cell');
-    headerRow.appendChild(thTotal);
+             if (!thead || !tbody || !tfoot) { console.error(`Elementos internos de ${tableId} no encontrados.`); return;}
 
-    tbody.innerHTML = '';
-    tfoot.innerHTML = '';
+             tbody.innerHTML = '';
+             tfoot.innerHTML = '';
 
-    const dataDict = scenarioData.data[type] || {};
-    const isGasto = (type === 'gastos');
-    const detailAdjusted = isGasto ? scenarioData.calculated.gastoAjustado : scenarioData.calculated.ingresoAjustado;
-    const totalByRubro = isGasto ? scenarioData.calculated.totalGastoRubroMes : scenarioData.calculated.totalIngresoRubroMes;
-    const annualTotalsObj = scenarioData.calculated.annualTotals[type] || {};
-    
-const monthlyTotals = scenarioData.calculated.totalIngresoProyectadoMes;
-    (scenarioData.rubroOrder[type] || []).forEach(rubro => {
-        // Rubro row
-        const row = tbody.insertRow();
-        row.classList.add('rubro-total-row');
-        const cellLabel = row.insertCell();
-        cellLabel.textContent = rubro;
-        for (let i = 0; i < 12; i++) {
-            const cell = row.insertCell();
-            const val = (totalByRubro[rubro] || [])[i] || 0;
-            cell.textContent = formatCurrency(val);
-            cell.classList.add('number-cell');
-        }
-        const cellTotal = row.insertCell();
-        const tval = annualTotalsObj[rubro] || 0;
-        cellTotal.textContent = formatCurrency(tval);
-        cellTotal.classList.add('number-cell');
+             if (!scenarioData || !scenarioData.data || !scenarioData.calculated || !scenarioData.rubroOrder || !appState.settings || !appState.settings.rubros) {
+                 const cols = thead.querySelector('tr')?.cells?.length || 14;
+                 tbody.innerHTML = `<tr><td colspan="${cols}" class="text-muted" style="text-align: center; padding: 20px;">Faltan datos o configuración para mostrar el detalle.</td></tr>`;
+                 return;
+             }
 
-        // Detail rows
-        const details = (dataDict[rubro]?.detailOrder) || [];
-        details.forEach(detalle => {
-            const dRow = tbody.insertRow();
-            dRow.classList.add('detail-row');
-            const dCell = dRow.insertCell();
-            dCell.textContent = detalle;
-            dCell.style.paddingLeft = '30px';
-            const vals = detailAdjusted[rubro]?.[detalle] || [];
-            for (let i = 0; i < 12; i++) {
-                const c = dRow.insertCell();
-                const v = vals[i] || 0;
-                c.textContent = formatCurrency(v);
-                c.classList.add('number-cell');
-            }
-            const sum = vals.reduce((a,b)=>a+(b||0), 0);
-            const cSum = dRow.insertCell();
-            cSum.textContent = formatCurrency(sum);
-            cSum.classList.add('number-cell');
-        });
+             const { data, calculated, monthStatus, rubroOrder } = scenarioData;
+             const config = appState.settings.rubroConfig || {};
+             // Use 'gastoAjustado' for gastos (includes coefficient effect)
+             // Use 'ingresoAjustado' for ingresos (stores BASE values for display consistency)
+             const calculatedSet = calculated[type === 'gastos' ? 'gastoAjustado' : 'ingresoAjustado'] || {};
+             // Use 'totalGastoRubroMes' or 'totalIngresoRubroMes' for rubro totals (includes UF mult for ingresos)
+             const totalRubroSet = calculated[type === 'gastos' ? 'totalGastoRubroMes' : 'totalIngresoRubroMes'] || {};
+             const annualRubroTotals = calculated.annualTotals?.[type] || { __TOTAL__: 0 };
+             // --- FIX: Use scenario-specific rubro order ---
+             const orderedRubros = Array.isArray(rubroOrder[type]) ? rubroOrder[type] : [];
 
-        // Toggle collapse on click
-        row.addEventListener('click', () => {
-            const collapsed = row.classList.toggle('collapsed');
-            let next = row.nextElementSibling;
-            while (next && next.classList.contains('detail-row')) {
-                if (collapsed) next.classList.add('hidden');
-                else next.classList.remove('hidden');
-                next = next.nextElementSibling;
-            }
-        });
-    });
+             // --- Dynamically add Month Headers if not present ---
+             let theadRow = thead.querySelector('tr');
+             if (!theadRow) {
+                 theadRow = thead.insertRow();
+                 theadRow.insertCell().textContent = "Rubro / Detalle";
+             }
+             const expectedHeaderCount = 2 + MONTHS.length; // Rubro/Detalle + 12 Months + Total Anual
+             if (theadRow.cells.length < expectedHeaderCount) {
+                 // Clear existing cells beyond the first one
+                 while (theadRow.cells.length > 1) theadRow.deleteCell(-1);
+                 // Add month and total headers
+                 MONTHS.forEach(month => {
+                     const th = document.createElement('th');
+                     th.textContent = month;
+                     th.classList.add('number-cell');
+                     theadRow.appendChild(th);
+                 });
+                 const thTotal = document.createElement('th');
+                 thTotal.textContent = "Total Anual";
+                 thTotal.classList.add('number-cell');
+                 theadRow.appendChild(thTotal);
+             }
+             // --- End Dynamic Header ---
 
-    // Footer
-    const footRow = tfoot.insertRow();
-    const footCellLabel = footRow.insertCell();
-    footCellLabel.textContent = 'TOTAL ANUAL';
-    for (let i = 0; i < 12; i++) {
-        const fc = footRow.insertCell();
-        const mv = monthlyTotals[i] || 0;
-        fc.textContent = formatCurrency(mv);
-        fc.classList.add('number-cell');
-    }
-    const fcTotal = footRow.insertCell();
-    const annualTotalSum = (scenarioData.calculated.annualTotals[type]?.__TOTAL__) || 0;
-    fcTotal.textContent = formatCurrency(annualTotalSum);
-    fcTotal.classList.add('number-cell');
-}
 
+             if (orderedRubros.length === 0) {
+                 tbody.innerHTML = `<tr><td colspan="${expectedHeaderCount}" class="text-muted" style="text-align: center; padding: 20px;">No hay rubros definidos o cargados para ${type} en este escenario.</td></tr>`;
+                 return;
+             }
+
+             // Build table body rows
+             let hasVisibleDetails = false; // Track if any details are actually processed
+             orderedRubros.forEach(rubro => {
+                if (!appState.settings.rubros[type].includes(rubro)) return;
+                 if (!data[type]?.[rubro]) return; // Skip if no data for this rubro in scenario
+
+                 const rubroData = data[type][rubro];
+                 // --- FIX: Use scenario-specific detail order ---
+                 const orderedDetails = Array.isArray(rubroData.detailOrder) ? rubroData.detailOrder : [];
+                 // Use global config for collapsed state, ensure it exists
+                 const rubroUiConfig = config[rubro] || { detailsCollapsed: true };
+
+                 // --- Rubro Total Row ---
+                 const totalRow = tbody.insertRow();
+                 totalRow.classList.add('rubro-total-row');
+                 if (rubroUiConfig.detailsCollapsed) totalRow.classList.add('collapsed');
+                 totalRow.dataset.rubro = rubro;
+                 totalRow.dataset.type = type;
+
+                 totalRow.insertCell().textContent = rubro;
+
+                 const monthlyTotals = totalRubroSet[rubro] || Array(12).fill(0);
+                 monthlyTotals.forEach(val => {
+                     const cell = totalRow.insertCell();
+                     cell.textContent = formatCurrency(val);
+                     cell.classList.add('number-cell');
+                 });
+
+                 const cellAnnualTotal = totalRow.insertCell();
+                 cellAnnualTotal.textContent = formatCurrency(annualRubroTotals[rubro] || 0);
+                 cellAnnualTotal.classList.add('number-cell');
+                 // --- End Rubro Total Row ---
+
+
+                 // --- Detail Rows (if any) ---
+                 orderedDetails.forEach(detail => {
+                      // --- FIX: Ensure detail data exists in calculatedSet before rendering row ---
+                      if (!calculatedSet[rubro] || calculatedSet[rubro][detail] === undefined) {
+                         console.warn(`Detalle calculado no encontrado para ${type}/${rubro}/${detail}. Omitiendo fila.`);
+                         return;
+                      }
+                      hasVisibleDetails = true; // Mark that we are adding at least one detail row
+
+                     const detailRow = tbody.insertRow();
+                     detailRow.classList.add('detail-row');
+                     detailRow.dataset.rubro = rubro;
+                     detailRow.dataset.type = type;
+                     if (rubroUiConfig.detailsCollapsed) detailRow.classList.add('hidden');
+
+                     const cellDetailName = detailRow.insertCell();
+                     cellDetailName.textContent = detail;
+                     cellDetailName.classList.add('text-muted');
+
+                     // Monthly value cells for the detail
+                     const detailValues = calculatedSet[rubro][detail]; // Use pre-validated calculated values
+                     const detailStatuses = monthStatus[type]?.[rubro]?.[detail] || Array(12).fill('Estimado'); // Get status for coloring
+                     let annualDetailTotal = 0;
+
+                     detailValues.forEach((val, index) => {
+                         const cell = detailRow.insertCell();
+                         cell.textContent = formatCurrency(val);
+                         cell.classList.add('number-cell');
+                         // Apply specific background based on status ONLY for GASTOS details
+                         if (type === 'gastos') {
+                             cell.classList.add(detailStatuses[index] === 'REAL' ? 'real-month-cell' : 'estimated-month-cell');
+                         }
+                         annualDetailTotal += val;
+                     });
+
+                     // Annual total cell for the detail
+                     const cellAnnualDetail = detailRow.insertCell();
+                     cellAnnualDetail.textContent = formatCurrency(annualDetailTotal);
+                     cellAnnualDetail.classList.add('number-cell');
+                 });
+                 // --- End Detail Rows ---
+             });
+
+             // --- FIX: Check if tbody is empty *after* loops ---
+             if (tbody.rows.length === 0) {
+                 tbody.innerHTML = `<tr><td colspan="${expectedHeaderCount}" class="text-muted" style="text-align: center; padding: 20px;">No hay rubros con datos para mostrar en el detalle de ${type}.</td></tr>`;
+             } else {
+                 // Build table footer row (Overall Total) only if there was content
+                 const tfootRow = tfoot.insertRow();
+                 tfootRow.insertCell().textContent = `TOTAL GENERAL ${type.toUpperCase()}`;
+
+                 // Use totalGastoProyectadoMes or totalIngresoProyectadoMes for footer totals
+                 const totalGeneralMensual = calculated[type === 'gastos' ? 'totalGastoProyectadoMes' : 'totalIngresoProyectadoMes'] || Array(12).fill(0);
+                 totalGeneralMensual.forEach(val => {
+                     const cell = tfootRow.insertCell();
+                     cell.textContent = formatCurrency(val);
+                     cell.classList.add('number-cell');
+                 });
+
+                 const cellTotalAnualGeneral = tfootRow.insertCell();
+                 cellTotalAnualGeneral.textContent = formatCurrency(annualRubroTotals.__TOTAL__ || 0);
+                 cellTotalAnualGeneral.classList.add('number-cell');
+             }
+
+             // Ensure listeners are present (safe to call multiple times if logic prevents duplicates)
+             addCollapsibleListeners();
+         }
 
 
         function updateCharts(scenarioData) {
@@ -1761,76 +1818,97 @@ const monthlyTotals = scenarioData.calculated.totalIngresoProyectadoMes;
 
         // --- Carga de Archivo Excel ---
         function handleFileUpload(files) {
-    console.log("handleFileUpload invoked with files:", files);
-if (!files.length) return;
+             if (!files || files.length === 0) { showSnackbar("No se seleccionó archivo.", true, 'warning'); return; }
+             const file = files[0];
+             const validTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+             if (!validTypes.includes(file.type)) { showSnackbar("Archivo inválido. Sube .xlsx o .xls.", true, 'error'); return; }
 
-    const file = files[0];
-    const reader = new FileReader();
+             const reader = new FileReader();
+             const feedbackDiv = document.getElementById('file-upload-feedback');
+             feedbackDiv.textContent = `Procesando: ${file.name}...`;
+             feedbackDiv.style.color = 'var(--info-color)';
 
-    reader.onload = function (e) {
-        try {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array', cellDates: false });
+             reader.onload = (e) => {
+                 try {
+                     const data = new Uint8Array(e.target.result);
+                     const workbook = XLSX.read(data, { type: 'array', cellDates: false, cellNF: false });
 
-            const gastosSheet = workbook.Sheets[GASTOS_SHEET_NAME];
-            const ingresosSheet = workbook.Sheets[INGRESOS_SHEET_NAME];
+                     const gastosSheet = workbook.Sheets[GASTOS_SHEET_NAME];
+                     const ingresosSheet = workbook.Sheets[INGRESOS_SHEET_NAME];
 
-            const gastosJson = XLSX.utils.sheet_to_json(gastosSheet, { header: 1 });
-            const ingresosJson = XLSX.utils.sheet_to_json(ingresosSheet, { header: 1 });
+                     if (!gastosSheet) throw new Error(`Hoja "${GASTOS_SHEET_NAME}" no encontrada.`);
+                     if (!ingresosSheet) throw new Error(`Hoja "${INGRESOS_SHEET_NAME}" no encontrada.`);
 
-            const headers = gastosJson[0].slice(2); // desde Ene en adelante
-            const current = getCurrentScenarioData();
-            if (!current) return;
+                     const scenarioData = getCurrentScenarioData();
+                     if (!scenarioData) throw new Error("No hay escenario activo para cargar datos.");
 
-            current.data.gastos = {};
-            current.data.ingresos = {};
-            current.rubroOrder.gastos = [];
-            current.rubroOrder.ingresos = [];
+                     // --- Reset specific data parts for the current scenario before processing ---
+                     scenarioData.data = { gastos: {}, ingresos: {} };
+                     scenarioData.monthStatus = { gastos: {}, ingresos: {} };
+                     scenarioData.rubroOrder = { gastos: [], ingresos: [] }; // Will be rebuilt from Excel
+                     // Calculated data is reset inside calculateAll which is called later
 
-            // Procesar gastos
-            for (let i = 1; i < gastosJson.length; i++) {
-                const row = gastosJson[i];
-                const rubro = row[0]?.trim();
-                const detalle = row[1]?.trim();
-                if (!rubro || !detalle) continue;
+                     let newRubrosFound = { gastos: [], ingresos: [] };
 
-                if (!current.data.gastos[rubro]) {
-                    current.data.gastos[rubro] = { detailOrder: [], detailsData: {} };
-                    current.rubroOrder.gastos.push(rubro);
-                }
+                     // Process sheets - This populates scenarioData.data, .monthStatus, .rubroOrder and tracks new rubros
+                     processSheetData(gastosSheet, scenarioData, 'gastos', newRubrosFound);
+                     processSheetData(ingresosSheet, scenarioData, 'ingresos', newRubrosFound);
 
-                current.data.gastos[rubro].detailOrder.push(detalle);
-                current.data.gastos[rubro].detailsData[detalle] = headers.map((_, idx) => parseFloat(row[idx + 2] || 0));
-            }
+                     let addedMessage = ""; let settingsChanged = false;
 
-            // Procesar ingresos
-            for (let i = 1; i < ingresosJson.length; i++) {
-                const row = ingresosJson[i];
-                const rubro = row[0]?.trim();
-                const detalle = row[1]?.trim();
-                if (!rubro || !detalle) continue;
+                     // Add new rubros found to global settings & initialize config
+                     ['gastos', 'ingresos'].forEach(type => {
+                         newRubrosFound[type].forEach(rubro => {
+                             if (!appState.settings.rubros[type].includes(rubro)) {
+                                 appState.settings.rubros[type].push(rubro);
+                                 settingsChanged = true;
+                                 if (type === 'gastos' && !appState.settings.rubroConfig[rubro]) {
+                                     // --- FIX: Set default collapsed state for new rubros ---
+                                     appState.settings.rubroConfig[rubro] = { coefficientType: 'None', detailsCollapsed: true };
+                                 }
+                                 addedMessage += `\n- Nuevo rubro (${type}): ${rubro} (añadido a Configuración)`;
+                             }
+                         });
+                     });
 
-                if (!current.data.ingresos[rubro]) {
-                    current.data.ingresos[rubro] = { detailOrder: [], detailsData: {} };
-                    current.rubroOrder.ingresos.push(rubro);
-                }
+                    // --- FIX: Ensure data structures for all rubros (including new ones) are initialized IN THE CURRENT SCENARIO
+                    // and ALSO in ALL other scenarios if global settings changed ---
+                    initializeScenarioDataForRubros(scenarioData); // Ensure current one is fully initialized with potentially new details etc.
+                     if(settingsChanged) {
+                        // Re-initialize all scenarios to include the new global rubro definitions
+                        Object.values(appState.scenarios).forEach(scenario => {
+                            initializeScenarioDataForRubros(scenario);
+                        });
+                     }
 
-                current.data.ingresos[rubro].detailOrder.push(detalle);
-                current.data.ingresos[rubro].detailsData[detalle] = headers.map((_, idx) => parseFloat(row[idx + 2] || 0));
-            console.log("Loaded Gastos Data:", current.data.gastos);
-            console.log("Loaded Ingresos Data:", current.data.ingresos);
-}
+                     feedbackDiv.textContent = `Archivo "${file.name}" procesado.${addedMessage}`;
+                     feedbackDiv.style.color = 'var(--success-color)';
+                     document.getElementById('excel-file-input').value = ''; // Reset file input
 
-            saveState();
-            calculateAll(current);
-        } catch (error) {
-            console.error("Error procesando archivo Excel:", error);
-            showSnackbar("Error al procesar el archivo Excel. Revisa el formato.", true, "error");
+                     if (settingsChanged) {
+                         saveState(); // Save updated global settings
+                         updateSettingsPanel(); // Update the settings UI to show new rubros/configs
+                     }
+
+                     // Recalculate everything after processing the data
+                     calculateAll(scenarioData); // This also saves state and updates UI
+                     showSnackbar("Datos del Excel cargados y procesados.", false, 'success');
+
+                 } catch (error) {
+                     console.error("Error procesando archivo Excel:", error);
+                     feedbackDiv.textContent = `Error: ${error.message}`;
+                     feedbackDiv.style.color = 'var(--danger-color)';
+                     showSnackbar(`Error procesando Excel: ${error.message}`, true, 'error', 6000);
+                 }
+             };
+             reader.onerror = (e) => {
+                 console.error("Error leyendo archivo:", e);
+                 feedbackDiv.textContent = "Error al leer el archivo.";
+                 feedbackDiv.style.color = 'var(--danger-color)';
+                 showSnackbar("Error al intentar leer el archivo.", true, 'error');
+             };
+             reader.readAsArrayBuffer(file);
         }
-    };
-
-    reader.readAsArrayBuffer(file);
-}
 
         function processSheetData(sheet, scenarioData, type, newRubrosTracker) {
             const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
@@ -2751,63 +2829,4 @@ if (!files.length) return;
              calculateAll(scenario); // Handles success message
         }
 
-
-function renderDetalleTabla(tablaId, data, tipo) {
-    const tbody = document.querySelector(`#${tablaId} tbody`);
-    tbody.innerHTML = ''; // Limpiar contenido previo
-
-    const rubros = Object.keys(data);
-    rubros.forEach(rubro => {
-        const rubroRow = document.createElement("tr");
-        rubroRow.classList.add("rubro-total-row", "collapsed");
-        rubroRow.innerHTML = `<td>${rubro}</td>`; // Solo el nombre del rubro, columnas se agregan en otro paso
-        tbody.appendChild(rubroRow);
-
-        const detalles = Object.keys(data[rubro]?.detailsData || {});
-        detalles.forEach(detalle => {
-            const fila = document.createElement("tr");
-            fila.classList.add("detail-row", "hidden");
-            fila.innerHTML = `<td>${detalle}</td>`; // También, columnas se agregan en otro paso
-            tbody.appendChild(fila);
-        });
-
-        // Toggle expand/collapse
-        rubroRow.addEventListener("click", () => {
-            rubroRow.classList.toggle("collapsed");
-            const nextRows = [];
-            let next = rubroRow.nextElementSibling;
-            while (next && next.classList.contains("detail-row")) {
-                nextRows.push(next);
-                next = next.nextElementSibling;
-            }
-            nextRows.forEach(row => {
-                row.classList.toggle("hidden");
-            });
-        });
-    });
-}
-
-
-
-// Función para colapsar/expandir todos los detalles de un tipo (gastos o ingresos)
-function toggleAll(type) {
-    const tableId = type === 'gastos' ? 'gastos-detail-table' : 'ingresos-detail-table';
-    const totalRows = document.querySelectorAll(`#${tableId} .rubro-total-row`);
-    totalRows.forEach(rubroRow => {
-        const isCollapsed = rubroRow.classList.toggle('collapsed');
-        let next = rubroRow.nextElementSibling;
-        while (next && next.classList.contains('detail-row')) {
-            if (isCollapsed) next.classList.add('hidden');
-            else next.classList.remove('hidden');
-            next = next.nextElementSibling;
-        }
-    });
-}
-
-// Agregar eventos a los iconos al inicializar el DOM
-document.addEventListener('DOMContentLoaded', () => {
-    const tg = document.getElementById('toggleGastos');
-    if (tg) tg.addEventListener('click', () => toggleAll('gastos'));
-    const ti = document.getElementById('toggleIngresos');
-    if (ti) ti.addEventListener('click', () => toggleAll('ingresos'));
-});
+    
