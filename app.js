@@ -520,7 +520,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Actualización de la Interfaz (UI) ---
         function initUI() {
              document.getElementById('exercise-year')?.setAttribute('value', appState.currentYear);
-             document.getElementById('footer-year').textContent = new Date().getFullYear();
+    const footerYear = document.getElementById('footer-year');
+    if (footerYear) {
+        footerYear.textContent = new Date().getFullYear();
+    }
              updateScenarioSelector(); // Populate selector based on loaded state
              updateCurrentYearAndScenarioInUI(); // Set initial text based on active scenario/year
         }
