@@ -2856,3 +2856,64 @@ function toggleAllRubros(type, collapse) {
 
     updateUI();
 }
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const gastosBtn = document.getElementById('toggle-gastos');
+    const ingresosBtn = document.getElementById('toggle-ingresos');
+
+    if (gastosBtn) {
+        let collapsed = false;
+        gastosBtn.onclick = () => {
+            toggleAllRubros('gastos', collapsed);
+            collapsed = !collapsed;
+            gastosBtn.textContent = collapsed ? '▶️' : '🔽';
+        };
+    }
+
+    if (ingresosBtn) {
+        let collapsed = false;
+        ingresosBtn.onclick = () => {
+            toggleAllRubros('ingresos', collapsed);
+            collapsed = !collapsed;
+            ingresosBtn.textContent = collapsed ? '▶️' : '🔽';
+        };
+    }
+});
+
+
+
+// Listener para botones con emoji en los títulos
+document.addEventListener('DOMContentLoaded', () => {
+    const toggleBtnGastos = document.getElementById('toggle-gastos');
+    const toggleBtnIngresos = document.getElementById('toggle-ingresos');
+
+    if (toggleBtnGastos) {
+        toggleBtnGastos.onclick = () => toggleAllRubrosWithEmoji('gastos', toggleBtnGastos);
+    }
+    if (toggleBtnIngresos) {
+        toggleBtnIngresos.onclick = () => toggleAllRubrosWithEmoji('ingresos', toggleBtnIngresos);
+    }
+});
+
+function toggleAllRubrosWithEmoji(type, button) {
+    const config = appState.settings.rubroConfig || {};
+    const scenarioData = getCurrentScenarioData();
+    if (!scenarioData || !scenarioData.rubroOrder) return;
+
+    const rubros = scenarioData.rubroOrder[type] || [];
+
+    // Determinar si están colapsados actualmente (basado en el primero)
+    const currentCollapsed = config[rubros[0]]?.detailsCollapsed ?? false;
+    const newCollapsedState = !currentCollapsed;
+
+    rubros.forEach(rubro => {
+        config[rubro] = config[rubro] || {};
+        config[rubro].detailsCollapsed = newCollapsedState;
+    });
+
+    // Cambiar el emoji
+    button.textContent = newCollapsedState ? "▶️" : "🔽";
+    updateUI();
+}
