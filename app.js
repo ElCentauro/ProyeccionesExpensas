@@ -13,23 +13,18 @@
         let appState = getDefaultAppState(); // Iniciar con estado por defecto limpio
 
         // --- Inicialización ---
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log(`DOM Cargado. Inicializando App ${STORAGE_KEY}...`);
-            loadState(); // Cargar estado guardado si existe
-            initTheme(); // Aplicar tema (antes de cualquier render que dependa de él)
-
-            // Asegurar que exista al menos un escenario activo y válido
-            validateAndSetActiveScenario();
-
-            // --- MODIFICADO: Update UI instructions with the correct name ---
-            const cuotaInfoSpan = document.getElementById('cuota-rubro-name-info');
-            if (cuotaInfoSpan) cuotaInfoSpan.textContent = CUOTA_RUBRO_NAME; // Usa la constante actualizada
-
-            initUI(); // Inicializar elementos de la UI que dependen del estado inicial
-            addEventListeners(); // Añadir listeners globales
-            updateUI(); // Renderizar todo con el estado actual/cargado
-            console.log(`App ${STORAGE_KEY} Inicializada.`);
-        });
+document.addEventListener('DOMContentLoaded', () => {
+    console.log(`DOM Cargado. Inicializando App ${STORAGE_KEY}...`);
+    loadState();
+    initTheme();
+    validateAndSetActiveScenario();
+    const cuotaInfoSpan = document.getElementById('cuota-rubro-name-info');
+    if (cuotaInfoSpan) cuotaInfoSpan.textContent = CUOTA_RUBRO_NAME;
+    initUI();
+    addEventListeners();
+    updateUI();
+    console.log(`App ${STORAGE_KEY} Inicializada.`);
+});
 
         // --- Validación y Selección de Escenario Activo ---
         function validateAndSetActiveScenario() {
