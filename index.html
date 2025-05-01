@@ -14,14 +14,18 @@
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
 <link href="styles.css" rel="stylesheet"/><script defer="True" src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script><script defer="True" src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script></head>
-<body>
-<header>
+<body><header style="background:#1d3557;color:white;padding:15px 20px;margin-bottom:20px;border-radius:6px;"><h1 style="margin:0;font-size:1.4rem;">Proyección Expensas - El Centauro</h1></header>
+
+ <!-- /container -->
+
+
+<!-- ==================== SCRIPT PRINCIPAL ==================== -->
+<main class="main-content"><header>
 <div class="container">
 <span class="app-title">Proyección Expensas - El Centauro</span>
 <button id="theme-toggle" title="Cambiar tema"><i class="fas fa-moon"></i></button>
 </div>
-</header>
-<div class="container">
+</header><div class="container">
 <div class="tabs">
 <button class="tab-link active" onclick="openTab(event, 'dashboard')"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
 <button class="tab-link" onclick="openTab(event, 'upload')"><i class="fas fa-upload"></i> Cargar Datos</button>
@@ -87,22 +91,16 @@
 <tfoot><!-- Contenido generado por JS --></tfoot>
 </table>
 </div>
-
 <h3>Evolutivo Expensa Mensual ($)</h3> <!-- MODIFICADO -->
 <canvas id="evolutivoCuotaChart"></canvas>
 <div class="chart-no-data">No hay datos suficientes para graficar.</div>
-
 <div>
-
 <h3>Participación Gastos (%)</h3>
 <canvas id="participacionGastosChart"></canvas>
 <div class="chart-no-data">No hay datos de gastos<br/>para mostrar el gráfico.</div>
-
-
 <h3>Participación Ingresos (%)</h3>
 <canvas id="participacionIngresosChart"></canvas>
 <div class="chart-no-data">No hay datos de ingresos<br/>para mostrar el gráfico.</div>
-
 </div>
 </div>
 <!-- ==================== UPLOAD ==================== -->
@@ -221,15 +219,11 @@
 <button class="button-secondary" onclick="exportChart('participacionIngresosChart', 'participacion_ingresos.png')" title="Descargar el gráfico de torta de ingresos como imagen PNG"><i class="fas fa-chart-pie"></i> Gráfico Ingresos (PNG)</button>
 </div>
 </div>
-</div> <!-- /container -->
-<footer>
+</div><footer>
 <div class="container">
             © <span id="footer-year"></span> Proyección Expensas El Centauro. v2.5 (Fixes: Detalle Carga, Nombre Expensa)
         </div>
-</footer>
-<div id="snackbar">Mensaje</div>
-<!-- ==================== SCRIPT PRINCIPAL ==================== -->
-<script defer="True" src="app.js"></script></body>
+</footer><div id="snackbar">Mensaje</div><script defer="True" src="app.js"></script></main></body>
 </html>
 ```
 
