@@ -821,10 +821,6 @@ document.addEventListener('DOMContentLoaded', () => {
                  // --- Rubro Total Row ---
                  const totalRow = tbody.insertRow();
                  totalRow.classList.add('rubro-total-row');
-    // Amarillo claro
-    } else if (isAllEstimado) {
-        totalRow.style.backgroundColor = '#fff3cd'; // Naranja suave
-    }
                  if (rubroUiConfig.detailsCollapsed) totalRow.classList.add('collapsed');
                  totalRow.dataset.rubro = rubro;
                  totalRow.dataset.type = type;
@@ -996,7 +992,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
              if (ctxGastos && gastoData.length > 0) {
                  window.participacionGastosChart_instance = new Chart(ctxGastos, {
-                     type: 'doughnut', // Changed to pie for variety, could be doughnut too
+                     type: 'pie', // Changed to pie for variety, could be doughnut too
                      data: {
                          labels: gastoLabels,
                          datasets: [{
@@ -1023,7 +1019,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
              if (ctxIngresos && ingresoData.length > 0) {
                  window.participacionIngresosChart_instance = new Chart(ctxIngresos, {
-                     type: 'doughnut', // Changed to pie
+                     type: 'pie', // Changed to pie
                      data: {
                          labels: ingresoLabels,
                          datasets: [{
@@ -1071,8 +1067,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 plugins: {
                     legend: {
                         position: 'bottom',
-                        labels: {
-            font: { size: 13.2 }, color: textColor, boxWidth: 15, padding: 20 }
+                        labels: { color: textColor, boxWidth: 15, padding: 20 }
                     },
                     tooltip: {
                         backgroundColor: hexToRgba(getComputedStyle(document.documentElement).getPropertyValue('--card-bg').trim(), 0.9),
@@ -1107,7 +1102,6 @@ document.addEventListener('DOMContentLoaded', () => {
                      legend: {
                          position: 'right',
                          labels: {
-            font: { size: 13.2 },
                             color: textColor, boxWidth: 15, padding: 15,
                              generateLabels: chart => {
                                 const data = chart.data;
@@ -1122,7 +1116,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                         fillStyle: dataset.backgroundColor[i],
                                         strokeStyle: dataset.borderColor || dataset.backgroundColor[i],
                                         lineWidth: dataset.borderWidth || 0,
-                                        index: i
+                                        hidden: isNaN(value) || chart.getDataVisibility(i), index: i
                                     };
                                 });
                              }
@@ -1145,7 +1139,7 @@ document.addEventListener('DOMContentLoaded', () => {
                          }
                      }
                  },
-                 cutout: '60%' // Optional: Makes it a Doughnut chart
+                 // cutout: '30%' // Optional: Makes it a Doughnut chart
              };
          }
 
