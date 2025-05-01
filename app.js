@@ -741,7 +741,8 @@
 
         
 function updateCollapsibleTable(type, scenarioData) {
-    const tableId = `${type}-detail-table`;
+    console.log("updateCollapsibleTable called for:", type, "with data:", scenarioData.data[type]);
+const tableId = `${type}-detail-table`;
     const table = document.getElementById(tableId);
     if (!table) { console.warn(`Tabla ${tableId} no encontrada.`); return; }
 
@@ -1760,7 +1761,8 @@ function updateCollapsibleTable(type, scenarioData) {
 
         // --- Carga de Archivo Excel ---
         function handleFileUpload(files) {
-    if (!files.length) return;
+    console.log("handleFileUpload invoked with files:", files);
+if (!files.length) return;
 
     const file = files[0];
     const reader = new FileReader();
@@ -1815,7 +1817,9 @@ function updateCollapsibleTable(type, scenarioData) {
 
                 current.data.ingresos[rubro].detailOrder.push(detalle);
                 current.data.ingresos[rubro].detailsData[detalle] = headers.map((_, idx) => parseFloat(row[idx + 2] || 0));
-            }
+            console.log("Loaded Gastos Data:", current.data.gastos);
+            console.log("Loaded Ingresos Data:", current.data.ingresos);
+}
 
             saveState();
             calculateAll(current);
