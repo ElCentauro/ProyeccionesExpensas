@@ -2786,3 +2786,28 @@ function renderDetalleTabla(tablaId, data, tipo) {
         });
     });
 }
+
+
+
+// Función para colapsar/expandir todos los detalles de un tipo (gastos o ingresos)
+function toggleAll(type) {
+    const tableId = type === 'gastos' ? 'gastos-detail-table' : 'ingresos-detail-table';
+    const totalRows = document.querySelectorAll(`#${tableId} .rubro-total-row`);
+    totalRows.forEach(rubroRow => {
+        const isCollapsed = rubroRow.classList.toggle('collapsed');
+        let next = rubroRow.nextElementSibling;
+        while (next && next.classList.contains('detail-row')) {
+            if (isCollapsed) next.classList.add('hidden');
+            else next.classList.remove('hidden');
+            next = next.nextElementSibling;
+        }
+    });
+}
+
+// Agregar eventos a los iconos al inicializar el DOM
+document.addEventListener('DOMContentLoaded', () => {
+    const tg = document.getElementById('toggleGastos');
+    if (tg) tg.addEventListener('click', () => toggleAll('gastos'));
+    const ti = document.getElementById('toggleIngresos');
+    if (ti) ti.addEventListener('click', () => toggleAll('ingresos'));
+});
