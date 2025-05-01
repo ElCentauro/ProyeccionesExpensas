@@ -775,9 +775,6 @@ const tableId = `${type}-detail-table`;
     const annualTotalsObj = scenarioData.calculated.annualTotals[type] || {};
     
 const monthlyTotals = scenarioData.calculated.totalIngresoProyectadoMes;
-}
-
-
     (scenarioData.rubroOrder[type] || []).forEach(rubro => {
         // Rubro row
         const row = tbody.insertRow();
