@@ -821,6 +821,13 @@ document.addEventListener('DOMContentLoaded', () => {
                  // --- Rubro Total Row ---
                  const totalRow = tbody.insertRow();
                  totalRow.classList.add('rubro-total-row');
+    const isAllReal = monthlyTotals.every((_, i) => (monthStatus[type]?.[rubro] && Object.values(monthStatus[type][rubro]).every(statusArr => statusArr?.[i] === 'REAL')));
+    const isAllEstimado = monthlyTotals.every((_, i) => (monthStatus[type]?.[rubro] && Object.values(monthStatus[type][rubro]).every(statusArr => statusArr?.[i] === 'Estimado')));
+    if (isAllReal) {
+        totalRow.style.backgroundColor = '#d4edda';
+    } else if (isAllEstimado) {
+        totalRow.style.backgroundColor = '#fff3cd';
+    }
                  if (rubroUiConfig.detailsCollapsed) totalRow.classList.add('collapsed');
                  totalRow.dataset.rubro = rubro;
                  totalRow.dataset.type = type;
@@ -832,6 +839,11 @@ document.addEventListener('DOMContentLoaded', () => {
                      const cell = totalRow.insertCell();
                      cell.textContent = formatCurrency(val);
                      cell.classList.add('number-cell');
+    if (detailStatuses?.[index] === 'REAL') {
+        cell.style.backgroundColor = '#d4edda';
+    } else if (detailStatuses?.[index] === 'Estimado') {
+        cell.style.backgroundColor = '#fff3cd';
+    }
                  });
 
                  const cellAnnualTotal = totalRow.insertCell();
@@ -868,6 +880,11 @@ document.addEventListener('DOMContentLoaded', () => {
                          const cell = detailRow.insertCell();
                          cell.textContent = formatCurrency(val);
                          cell.classList.add('number-cell');
+    if (detailStatuses?.[index] === 'REAL') {
+        cell.style.backgroundColor = '#d4edda';
+    } else if (detailStatuses?.[index] === 'Estimado') {
+        cell.style.backgroundColor = '#fff3cd';
+    }
                          // Apply specific background based on status ONLY for GASTOS details
                          if (type === 'gastos') {
                              cell.classList.add(detailStatuses[index] === 'REAL' ? 'real-month-cell' : 'estimated-month-cell');
@@ -897,6 +914,11 @@ document.addEventListener('DOMContentLoaded', () => {
                      const cell = tfootRow.insertCell();
                      cell.textContent = formatCurrency(val);
                      cell.classList.add('number-cell');
+    if (detailStatuses?.[index] === 'REAL') {
+        cell.style.backgroundColor = '#d4edda';
+    } else if (detailStatuses?.[index] === 'Estimado') {
+        cell.style.backgroundColor = '#fff3cd';
+    }
                  });
 
                  const cellTotalAnualGeneral = tfootRow.insertCell();
@@ -992,7 +1014,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
              if (ctxGastos && gastoData.length > 0) {
                  window.participacionGastosChart_instance = new Chart(ctxGastos, {
-                     type: 'pie', // Changed to pie for variety, could be doughnut too
+                     type: 'doughnut', // Changed to pie for variety, could be doughnut too
                      data: {
                          labels: gastoLabels,
                          datasets: [{
@@ -1019,7 +1041,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
              if (ctxIngresos && ingresoData.length > 0) {
                  window.participacionIngresosChart_instance = new Chart(ctxIngresos, {
-                     type: 'pie', // Changed to pie
+                     type: 'doughnut', // Changed to pie
                      data: {
                          labels: ingresoLabels,
                          datasets: [{
@@ -1067,7 +1089,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 plugins: {
                     legend: {
                         position: 'bottom',
-                        labels: { color: textColor, boxWidth: 15, padding: 20 }
+                        labels: { font: { size: 13.2 }, color: textColor, boxWidth: 15, padding: 20 }
                     },
                     tooltip: {
                         backgroundColor: hexToRgba(getComputedStyle(document.documentElement).getPropertyValue('--card-bg').trim(), 0.9),
@@ -1102,7 +1124,7 @@ document.addEventListener('DOMContentLoaded', () => {
                      legend: {
                          position: 'right',
                          labels: {
-                            color: textColor, boxWidth: 15, padding: 15,
+                            font: { size: 13.2 }, color: textColor, boxWidth: 15, padding: 15,
                              generateLabels: chart => {
                                 const data = chart.data;
                                 if (!data.labels.length || !data.datasets.length) return [];
@@ -1116,7 +1138,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                         fillStyle: dataset.backgroundColor[i],
                                         strokeStyle: dataset.borderColor || dataset.backgroundColor[i],
                                         lineWidth: dataset.borderWidth || 0,
-                                        hidden: isNaN(value) || chart.getDataVisibility(i), index: i
+                                         index: i
                                     };
                                 });
                              }
@@ -1139,7 +1161,7 @@ document.addEventListener('DOMContentLoaded', () => {
                          }
                      }
                  },
-                 // cutout: '30%' // Optional: Makes it a Doughnut chart
+                 cutout: '60%' // Optional: Makes it a Doughnut chart
              };
          }
 
