@@ -1,4 +1,5 @@
-/* --- Reset Básico y Fuentes --- */
+
+        /* --- Reset Básico y Fuentes --- */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; font-size: 16px; /* Base font size */ }
         body {
@@ -412,3 +413,4 @@
             #file-upload-area { padding: 30px; }
             .management-list li select { width: 100%; } /* Select full width on smallest screens */
         }
+    
