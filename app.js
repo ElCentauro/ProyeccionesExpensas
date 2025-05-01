@@ -774,24 +774,8 @@ const tableId = `${type}-detail-table`;
     const totalByRubro = isGasto ? scenarioData.calculated.totalGastoRubroMes : scenarioData.calculated.totalIngresoRubroMes;
     const annualTotalsObj = scenarioData.calculated.annualTotals[type] || {};
     
-let monthlyTotals;
-if (type === 'gastos') {
-    monthlyTotals = scenarioData.calculated.totalGastoProyectadoMes;
-} else {
-    const uf = parseInt(appState.settings.cantidadUnidades, 10) || 1;
-    monthlyTotals = Array(12).fill(0);
-    const ingresosData = scenarioData.data.ingresos || {};
-    Object.values(ingresosData).forEach(rubroObj => {
-        const detailsData = rubroObj.detailsData || {};
-        Object.entries(detailsData).forEach(([detalle, values]) => {
-            values.forEach((v, i) => {
-                const base = parseFloat(v) || 0;
-                if (detalle === CUOTA_RUBRO_NAME || detalle === EXTRA_CUOTA_RUBRO_NAME) {
-                    monthlyTotals[i] += base * uf;
-                } else {
-                    monthlyTotals[i] += base;
-                }
-            });
+const monthlyTotals = scenarioData.calculated.totalIngresoProyectadoMes;
+});
         });
     });
 }
