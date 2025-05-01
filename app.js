@@ -2817,3 +2817,4 @@ document.addEventListener('DOMContentLoaded', () => {
     const ti = document.getElementById('toggleIngresos');
     if (ti) ti.addEventListener('click', () => toggleAll('ingresos'));
 });
+
