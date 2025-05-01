@@ -739,167 +739,107 @@
              updateCollapsibleTable('ingresos', scenarioData);
          }
 
-        function updateCollapsibleTable(type, scenarioData) {
-             const tableId = `${type}-detail-table`;
-             const table = document.getElementById(tableId);
-             if (!table) { console.warn(`Tabla ${tableId} no encontrada.`); return; }
+        
+function updateCollapsibleTable(type, scenarioData) {
+    const tableId = `${type}-detail-table`;
+    const table = document.getElementById(tableId);
+    if (!table) { console.warn(`Tabla ${tableId} no encontrada.`); return; }
 
-             const thead = table.querySelector('thead');
-             const tbody = table.querySelector('tbody');
-             const tfoot = table.querySelector('tfoot');
+    const thead = table.querySelector('thead');
+    const tbody = table.querySelector('tbody');
+    const tfoot = table.querySelector('tfoot');
+    if (!thead || !tbody || !tfoot) { console.error(`Elementos internos de ${tableId} no encontrados.`); return; }
 
-             if (!thead || !tbody || !tfoot) { console.error(`Elementos internos de ${tableId} no encontrados.`); return;}
+    // Header
+    const headerRow = thead.querySelector('tr');
+    headerRow.innerHTML = '<th>Rubro / Detalle</th>';
+    MONTHS.forEach(month => {
+        const th = document.createElement('th');
+        th.textContent = month;
+        th.classList.add('number-cell');
+        headerRow.appendChild(th);
+    });
+    const thTotal = document.createElement('th');
+    thTotal.textContent = "Total Anual";
+    thTotal.classList.add('number-cell');
+    headerRow.appendChild(thTotal);
 
-             tbody.innerHTML = '';
-             tfoot.innerHTML = '';
+    tbody.innerHTML = '';
+    tfoot.innerHTML = '';
 
-             if (!scenarioData || !scenarioData.data || !scenarioData.calculated || !scenarioData.rubroOrder || !appState.settings || !appState.settings.rubros) {
-                 const cols = thead.querySelector('tr')?.cells?.length || 14;
-                 tbody.innerHTML = `<tr><td colspan="${cols}" class="text-muted" style="text-align: center; padding: 20px;">Faltan datos o configuración para mostrar el detalle.</td></tr>`;
-                 return;
-             }
+    const dataDict = scenarioData.data[type] || {};
+    const isGasto = (type === 'gastos');
+    const detailAdjusted = isGasto ? scenarioData.calculated.gastoAjustado : scenarioData.calculated.ingresoAjustado;
+    const totalByRubro = isGasto ? scenarioData.calculated.totalGastoRubroMes : scenarioData.calculated.totalIngresoRubroMes;
+    const annualTotalsObj = scenarioData.calculated.annualTotals[type] || {};
+    const monthlyTotals = isGasto ? scenarioData.calculated.totalGastoProyectadoMes : scenarioData.calculated.totalIngresoProyectadoMes;
 
-             const { data, calculated, monthStatus, rubroOrder } = scenarioData;
-             const config = appState.settings.rubroConfig || {};
-             // Use 'gastoAjustado' for gastos (includes coefficient effect)
-             // Use 'ingresoAjustado' for ingresos (stores BASE values for display consistency)
-             const calculatedSet = calculated[type === 'gastos' ? 'gastoAjustado' : 'ingresoAjustado'] || {};
-             // Use 'totalGastoRubroMes' or 'totalIngresoRubroMes' for rubro totals (includes UF mult for ingresos)
-             const totalRubroSet = calculated[type === 'gastos' ? 'totalGastoRubroMes' : 'totalIngresoRubroMes'] || {};
-             const annualRubroTotals = calculated.annualTotals?.[type] || { __TOTAL__: 0 };
-             // --- FIX: Use scenario-specific rubro order ---
-             const orderedRubros = Array.isArray(rubroOrder[type]) ? rubroOrder[type] : [];
+    (scenarioData.rubroOrder[type] || []).forEach(rubro => {
+        // Rubro row
+        const row = tbody.insertRow();
+        row.classList.add('rubro-total-row');
+        const cellLabel = row.insertCell();
+        cellLabel.textContent = rubro;
+        for (let i = 0; i < 12; i++) {
+            const cell = row.insertCell();
+            const val = (totalByRubro[rubro] || [])[i] || 0;
+            cell.textContent = formatCurrency(val);
+            cell.classList.add('number-cell');
+        }
+        const cellTotal = row.insertCell();
+        const tval = annualTotalsObj[rubro] || 0;
+        cellTotal.textContent = formatCurrency(tval);
+        cellTotal.classList.add('number-cell');
 
-             // --- Dynamically add Month Headers if not present ---
-             let theadRow = thead.querySelector('tr');
-             if (!theadRow) {
-                 theadRow = thead.insertRow();
-                 theadRow.insertCell().textContent = "Rubro / Detalle";
-             }
-             const expectedHeaderCount = 2 + MONTHS.length; // Rubro/Detalle + 12 Months + Total Anual
-             if (theadRow.cells.length < expectedHeaderCount) {
-                 // Clear existing cells beyond the first one
-                 while (theadRow.cells.length > 1) theadRow.deleteCell(-1);
-                 // Add month and total headers
-                 MONTHS.forEach(month => {
-                     const th = document.createElement('th');
-                     th.textContent = month;
-                     th.classList.add('number-cell');
-                     theadRow.appendChild(th);
-                 });
-                 const thTotal = document.createElement('th');
-                 thTotal.textContent = "Total Anual";
-                 thTotal.classList.add('number-cell');
-                 theadRow.appendChild(thTotal);
-             }
-             // --- End Dynamic Header ---
+        // Detail rows
+        const details = (dataDict[rubro]?.detailOrder) || [];
+        details.forEach(detalle => {
+            const dRow = tbody.insertRow();
+            dRow.classList.add('detail-row');
+            const dCell = dRow.insertCell();
+            dCell.textContent = detalle;
+            dCell.style.paddingLeft = '30px';
+            const vals = detailAdjusted[rubro]?.[detalle] || [];
+            for (let i = 0; i < 12; i++) {
+                const c = dRow.insertCell();
+                const v = vals[i] || 0;
+                c.textContent = formatCurrency(v);
+                c.classList.add('number-cell');
+            }
+            const sum = vals.reduce((a,b)=>a+(b||0), 0);
+            const cSum = dRow.insertCell();
+            cSum.textContent = formatCurrency(sum);
+            cSum.classList.add('number-cell');
+        });
 
+        // Toggle collapse on click
+        row.addEventListener('click', () => {
+            const collapsed = row.classList.toggle('collapsed');
+            let next = row.nextElementSibling;
+            while (next && next.classList.contains('detail-row')) {
+                if (collapsed) next.classList.add('hidden');
+                else next.classList.remove('hidden');
+                next = next.nextElementSibling;
+            }
+        });
+    });
 
-             if (orderedRubros.length === 0) {
-                 tbody.innerHTML = `<tr><td colspan="${expectedHeaderCount}" class="text-muted" style="text-align: center; padding: 20px;">No hay rubros definidos o cargados para ${type} en este escenario.</td></tr>`;
-                 return;
-             }
+    // Footer
+    const footRow = tfoot.insertRow();
+    const footCellLabel = footRow.insertCell();
+    footCellLabel.textContent = 'TOTAL ANUAL';
+    for (let i = 0; i < 12; i++) {
+        const fc = footRow.insertCell();
+        const mv = monthlyTotals[i] || 0;
+        fc.textContent = formatCurrency(mv);
+        fc.classList.add('number-cell');
+    }
+    const fcTotal = footRow.insertCell();
+    const annualTotalSum = (scenarioData.calculated.annualTotals[type]?.__TOTAL__) || 0;
+    fcTotal.textContent = formatCurrency(annualTotalSum);
+    fcTotal.classList.add('number-cell');
+}
 
-             // Build table body rows
-             let hasVisibleDetails = false; // Track if any details are actually processed
-             orderedRubros.forEach(rubro => {
-                if (!appState.settings.rubros[type].includes(rubro)) return;
-                 if (!data[type]?.[rubro]) return; // Skip if no data for this rubro in scenario
-
-                 const rubroData = data[type][rubro];
-                 // --- FIX: Use scenario-specific detail order ---
-                 const orderedDetails = Array.isArray(rubroData.detailOrder) ? rubroData.detailOrder : [];
-                 // Use global config for collapsed state, ensure it exists
-                 const rubroUiConfig = config[rubro] || { detailsCollapsed: false };
-
-                 // --- Rubro Total Row ---
-                 const totalRow = tbody.insertRow();
-                 totalRow.classList.add('rubro-total-row');
-                 totalRow.dataset.rubro = rubro;
-                 totalRow.dataset.type = type;
-
-                 totalRow.insertCell().textContent = rubro;
-
-                 const monthlyTotals = totalRubroSet[rubro] || Array(12).fill(0);
-                 monthlyTotals.forEach(val => {
-                     const cell = totalRow.insertCell();
-                     cell.textContent = formatCurrency(val);
-                     cell.classList.add('number-cell');
-                 });
-
-                 const cellAnnualTotal = totalRow.insertCell();
-                 cellAnnualTotal.textContent = formatCurrency(annualRubroTotals[rubro] || 0);
-                 cellAnnualTotal.classList.add('number-cell');
-                 // --- End Rubro Total Row ---
-
-
-                 // --- Detail Rows (if any) ---
-                 orderedDetails.forEach(detail => {
-                      // --- FIX: Ensure detail data exists in calculatedSet before rendering row ---
-                      if (!calculatedSet[rubro] || calculatedSet[rubro][detail] === undefined) {
-                         console.warn(`Detalle calculado no encontrado para ${type}/${rubro}/${detail}. Omitiendo fila.`);
-                         return;
-                      }
-                      hasVisibleDetails = true; // Mark that we are adding at least one detail row
-
-                     const detailRow = tbody.insertRow();
-                     detailRow.classList.add('detail-row');
-                     detailRow.dataset.rubro = rubro;
-                     detailRow.dataset.type = type;
-                     if (rubroUiConfig.detailsCollapsed) detailRow.classList.add('hidden');
-
-                     const cellDetailName = detailRow.insertCell();
-                     cellDetailName.textContent = detail;
-                     cellDetailName.classList.add('text-muted');
-
-                     // Monthly value cells for the detail
-                     const detailValues = calculatedSet[rubro][detail]; // Use pre-validated calculated values
-                     const detailStatuses = monthStatus[type]?.[rubro]?.[detail] || Array(12).fill('Estimado'); // Get status for coloring
-                     let annualDetailTotal = 0;
-
-                     detailValues.forEach((val, index) => {
-                         const cell = detailRow.insertCell();
-                         cell.textContent = formatCurrency(val);
-                         cell.classList.add('number-cell');
-                         // Apply specific background based on status ONLY for GASTOS details
-                         if (type === 'gastos') {
-                             cell.classList.add(detailStatuses[index] === 'REAL' ? 'real-month-cell' : 'estimated-month-cell');
-                         }
-                         annualDetailTotal += val;
-                     });
-
-                     // Annual total cell for the detail
-                     const cellAnnualDetail = detailRow.insertCell();
-                     cellAnnualDetail.textContent = formatCurrency(annualDetailTotal);
-                     cellAnnualDetail.classList.add('number-cell');
-                 });
-                 // --- End Detail Rows ---
-             });
-
-             // --- FIX: Check if tbody is empty *after* loops ---
-             if (tbody.rows.length === 0) {
-                 tbody.innerHTML = `<tr><td colspan="${expectedHeaderCount}" class="text-muted" style="text-align: center; padding: 20px;">No hay rubros con datos para mostrar en el detalle de ${type}.</td></tr>`;
-             } else {
-                 // Build table footer row (Overall Total) only if there was content
-                 const tfootRow = tfoot.insertRow();
-                 tfootRow.insertCell().textContent = `TOTAL GENERAL ${type.toUpperCase()}`;
-
-                 // Use totalGastoProyectadoMes or totalIngresoProyectadoMes for footer totals
-                 const totalGeneralMensual = calculated[type === 'gastos' ? 'totalGastoProyectadoMes' : 'totalIngresoProyectadoMes'] || Array(12).fill(0);
-                 totalGeneralMensual.forEach(val => {
-                     const cell = tfootRow.insertCell();
-                     cell.textContent = formatCurrency(val);
-                     cell.classList.add('number-cell');
-                 });
-
-                 const cellTotalAnualGeneral = tfootRow.insertCell();
-                 cellTotalAnualGeneral.textContent = formatCurrency(annualRubroTotals.__TOTAL__ || 0);
-                 cellTotalAnualGeneral.classList.add('number-cell');
-             }
-
-             // Ensure listeners are present (safe to call multiple times if logic prevents duplicates)
-             addCollapsibleListeners();
-         }
 
 
         function updateCharts(scenarioData) {
