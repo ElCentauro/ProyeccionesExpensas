@@ -810,12 +810,11 @@
                  // --- FIX: Use scenario-specific detail order ---
                  const orderedDetails = Array.isArray(rubroData.detailOrder) ? rubroData.detailOrder : [];
                  // Use global config for collapsed state, ensure it exists
-                 const rubroUiConfig = config[rubro] || { detailsCollapsed: true };
+                 const rubroUiConfig = config[rubro] || { detailsCollapsed: false };
 
                  // --- Rubro Total Row ---
                  const totalRow = tbody.insertRow();
                  totalRow.classList.add('rubro-total-row');
-                 if (rubroUiConfig.detailsCollapsed) totalRow.classList.add('collapsed');
                  totalRow.dataset.rubro = rubro;
                  totalRow.dataset.type = type;
 
