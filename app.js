@@ -1821,97 +1821,74 @@
 
         // --- Carga de Archivo Excel ---
         function handleFileUpload(files) {
-             if (!files || files.length === 0) { showSnackbar("No se seleccionó archivo.", true, 'warning'); return; }
-             const file = files[0];
-             const validTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
-             if (!validTypes.includes(file.type)) { showSnackbar("Archivo inválido. Sube .xlsx o .xls.", true, 'error'); return; }
+    if (!files.length) return;
 
-             const reader = new FileReader();
-             const feedbackDiv = document.getElementById('file-upload-feedback');
-             feedbackDiv.textContent = `Procesando: ${file.name}...`;
-             feedbackDiv.style.color = 'var(--info-color)';
+    const file = files[0];
+    const reader = new FileReader();
 
-             reader.onload = (e) => {
-                 try {
-                     const data = new Uint8Array(e.target.result);
-                     const workbook = XLSX.read(data, { type: 'array', cellDates: false, cellNF: false });
+    reader.onload = function (e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array', cellDates: false });
 
-                     const gastosSheet = workbook.Sheets[GASTOS_SHEET_NAME];
-                     const ingresosSheet = workbook.Sheets[INGRESOS_SHEET_NAME];
+            const gastosSheet = workbook.Sheets[GASTOS_SHEET_NAME];
+            const ingresosSheet = workbook.Sheets[INGRESOS_SHEET_NAME];
 
-                     if (!gastosSheet) throw new Error(`Hoja "${GASTOS_SHEET_NAME}" no encontrada.`);
-                     if (!ingresosSheet) throw new Error(`Hoja "${INGRESOS_SHEET_NAME}" no encontrada.`);
+            const gastosJson = XLSX.utils.sheet_to_json(gastosSheet, { header: 1 });
+            const ingresosJson = XLSX.utils.sheet_to_json(ingresosSheet, { header: 1 });
 
-                     const scenarioData = getCurrentScenarioData();
-                     if (!scenarioData) throw new Error("No hay escenario activo para cargar datos.");
+            const headers = gastosJson[0].slice(2); // Desde "Ene" en adelante
+            const current = getCurrentScenarioData();
+            if (!current) return;
 
-                     // --- Reset specific data parts for the current scenario before processing ---
-                     scenarioData.data = { gastos: {}, ingresos: {} };
-                     scenarioData.monthStatus = { gastos: {}, ingresos: {} };
-                     scenarioData.rubroOrder = { gastos: [], ingresos: [] }; // Will be rebuilt from Excel
-                     // Calculated data is reset inside calculateAll which is called later
+            // Inicializar estructuras si no existen
+            current.data.gastos = {};
+            current.data.ingresos = {};
+            current.rubroOrder.gastos = [];
+            current.rubroOrder.ingresos = [];
 
-                     let newRubrosFound = { gastos: [], ingresos: [] };
+            // Procesar gastos
+            for (let i = 1; i < gastosJson.length; i++) {
+                const row = gastosJson[i];
+                const rubro = row[0]?.trim();
+                const detalle = row[1]?.trim();
+                if (!rubro || !detalle) continue;
 
-                     // Process sheets - This populates scenarioData.data, .monthStatus, .rubroOrder and tracks new rubros
-                     processSheetData(gastosSheet, scenarioData, 'gastos', newRubrosFound);
-                     processSheetData(ingresosSheet, scenarioData, 'ingresos', newRubrosFound);
+                if (!current.data.gastos[rubro]) {
+                    current.data.gastos[rubro] = { detailOrder: [], detailsData: {} };
+                    current.rubroOrder.gastos.push(rubro);
+                }
 
-                     let addedMessage = ""; let settingsChanged = false;
+                current.data.gastos[rubro].detailOrder.push(detalle);
+                current.data.gastos[rubro].detailsData[detalle] = headers.map((_, idx) => parseFloat(row[idx + 2] || 0));
+            }
 
-                     // Add new rubros found to global settings & initialize config
-                     ['gastos', 'ingresos'].forEach(type => {
-                         newRubrosFound[type].forEach(rubro => {
-                             if (!appState.settings.rubros[type].includes(rubro)) {
-                                 appState.settings.rubros[type].push(rubro);
-                                 settingsChanged = true;
-                                 if (type === 'gastos' && !appState.settings.rubroConfig[rubro]) {
-                                     // --- FIX: Set default collapsed state for new rubros ---
-                                     appState.settings.rubroConfig[rubro] = { coefficientType: 'None', detailsCollapsed: true };
-                                 }
-                                 addedMessage += `\n- Nuevo rubro (${type}): ${rubro} (añadido a Configuración)`;
-                             }
-                         });
-                     });
+            // Procesar ingresos
+            for (let i = 1; i < ingresosJson.length; i++) {
+                const row = ingresosJson[i];
+                const rubro = row[0]?.trim();
+                const detalle = row[1]?.trim();
+                if (!rubro || !detalle) continue;
 
-                    // --- FIX: Ensure data structures for all rubros (including new ones) are initialized IN THE CURRENT SCENARIO
-                    // and ALSO in ALL other scenarios if global settings changed ---
-                    initializeScenarioDataForRubros(scenarioData); // Ensure current one is fully initialized with potentially new details etc.
-                     if(settingsChanged) {
-                        // Re-initialize all scenarios to include the new global rubro definitions
-                        Object.values(appState.scenarios).forEach(scenario => {
-                            initializeScenarioDataForRubros(scenario);
-                        });
-                     }
+                if (!current.data.ingresos[rubro]) {
+                    current.data.ingresos[rubro] = { detailOrder: [], detailsData: {} };
+                    current.rubroOrder.ingresos.push(rubro);
+                }
 
-                     feedbackDiv.textContent = `Archivo "${file.name}" procesado.${addedMessage}`;
-                     feedbackDiv.style.color = 'var(--success-color)';
-                     document.getElementById('excel-file-input').value = ''; // Reset file input
+                current.data.ingresos[rubro].detailOrder.push(detalle);
+                current.data.ingresos[rubro].detailsData[detalle] = headers.map((_, idx) => parseFloat(row[idx + 2] || 0));
+            }
 
-                     if (settingsChanged) {
-                         saveState(); // Save updated global settings
-                         updateSettingsPanel(); // Update the settings UI to show new rubros/configs
-                     }
-
-                     // Recalculate everything after processing the data
-                     calculateAll(scenarioData); // This also saves state and updates UI
-                     showSnackbar("Datos del Excel cargados y procesados.", false, 'success');
-
-                 } catch (error) {
-                     console.error("Error procesando archivo Excel:", error);
-                     feedbackDiv.textContent = `Error: ${error.message}`;
-                     feedbackDiv.style.color = 'var(--danger-color)';
-                     showSnackbar(`Error procesando Excel: ${error.message}`, true, 'error', 6000);
-                 }
-             };
-             reader.onerror = (e) => {
-                 console.error("Error leyendo archivo:", e);
-                 feedbackDiv.textContent = "Error al leer el archivo.";
-                 feedbackDiv.style.color = 'var(--danger-color)';
-                 showSnackbar("Error al intentar leer el archivo.", true, 'error');
-             };
-             reader.readAsArrayBuffer(file);
+            saveState();
+            calculateAll(current);
+        } catch (error) {
+            console.error("Error procesando archivo Excel:", error);
+            showSnackbar("Error al procesar el archivo Excel. Revisa el formato.", true, "error");
         }
+    };
+
+    reader.readAsArrayBuffer(file);
+}
 
         function processSheetData(sheet, scenarioData, type, newRubrosTracker) {
             const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
