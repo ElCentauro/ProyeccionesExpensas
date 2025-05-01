@@ -41,6 +41,7 @@ function generateColors(count) {
 
 
 
+
 function updateCharts() {
     const scenarioData = getCurrentScenarioData();
     console.log("updateCharts() llamado", scenarioData);
@@ -51,7 +52,6 @@ function updateCharts() {
     console.log("Gastos:", gastosData);
     console.log("Ingresos:", ingresosData);
 
-    // Resto igual al último generado
     const gastosLabels = Object.keys(gastosData);
     const gastosValues = gastosLabels.map(r => gastosData[r]);
     if (gastosValues.length > 0) {
@@ -70,6 +70,35 @@ function updateCharts() {
                 plugins: {
                     legend: { position: 'bottom', labels: { padding: 15 } },
                     tooltip: { callbacks: Chart.defaults.plugins.tooltip.callbacks }
+                }
+            }
+        });
+    }
+
+    const ingresosLabels = Object.keys(ingresosData);
+    const ingresosValues = ingresosLabels.map(r => ingresosData[r]);
+    if (ingresosValues.length > 0) {
+        new Chart(document.getElementById('participacionIngresosChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ingresosLabels,
+                datasets: [{
+                    data: ingresosValues,
+                    backgroundColor: generateColors(ingresosLabels.length),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                cutout: '60%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 15 } },
+                    tooltip: { callbacks: Chart.defaults.plugins.tooltip.callbacks }
+                }
+            }
+        });
+    }
+}
+
                 }
             }
         });
