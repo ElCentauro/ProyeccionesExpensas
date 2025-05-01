@@ -1,4 +1,15 @@
 
+Chart.defaults.plugins.legend.labels.boxWidth = 20;
+Chart.defaults.plugins.legend.labels.boxHeight = 10;
+Chart.defaults.plugins.legend.labels.color = '#333';
+Chart.defaults.plugins.tooltip.callbacks.label = function(context) {
+    let label = context.label || '';
+    let value = context.parsed;
+    let total = context.chart._metasets[context.datasetIndex].total;
+    let percent = ((value / total) * 100).toFixed(1);
+    return `${label}: $${value.toLocaleString()} (${percent}%)`;
+};
+
         // --- Constantes y Estado Global ---
         const MONTHS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
         const FULL_MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
