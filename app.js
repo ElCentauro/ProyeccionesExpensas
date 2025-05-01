@@ -805,7 +805,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  // --- FIX: Use scenario-specific detail order ---
                  const orderedDetails = Array.isArray(rubroData.detailOrder) ? rubroData.detailOrder : [];
                  // Use global config for collapsed state, ensure it exists
-                 const rubroUiConfig = config[rubro] || { detailsCollapsed: true };
+                 const rubroUiConfig = config[rubro] || { detailsCollapsed: false };
 
                  // --- Rubro Total Row ---
                  const totalRow = tbody.insertRow();
@@ -1572,7 +1572,7 @@ document.addEventListener('DOMContentLoaded', () => {
              if (rubro && newCoefType !== undefined) {
                  // Ensure config object exists before assigning
                  if (!appState.settings.rubroConfig[rubro]) {
-                     appState.settings.rubroConfig[rubro] = { detailsCollapsed: true }; // Keep default collapsed state
+                     appState.settings.rubroConfig[rubro] = { detailsCollapsed: false }; // Keep default collapsed state
                  }
                  appState.settings.rubroConfig[rubro].coefficientType = newCoefType;
                  console.log(`Coeficiente para "${rubro}" asignado a "${newCoefType}".`);
@@ -1862,7 +1862,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                  settingsChanged = true;
                                  if (type === 'gastos' && !appState.settings.rubroConfig[rubro]) {
                                      // --- FIX: Set default collapsed state for new rubros ---
-                                     appState.settings.rubroConfig[rubro] = { coefficientType: 'None', detailsCollapsed: true };
+                                     appState.settings.rubroConfig[rubro] = { coefficientType: 'None', detailsCollapsed: false };
                                  }
                                  addedMessage += `\n- Nuevo rubro (${type}): ${rubro} (añadido a Configuración)`;
                              }
@@ -2031,7 +2031,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Ensure sample rubros exist globally and locally
             sampleGastosRubros.forEach(r => {
                 if (!appState.settings.rubros.gastos.includes(r)) { appState.settings.rubros.gastos.push(r); settingsChanged = true; }
-                if (!appState.settings.rubroConfig[r]) appState.settings.rubroConfig[r] = { coefficientType: 'None', detailsCollapsed: true };
+                if (!appState.settings.rubroConfig[r]) appState.settings.rubroConfig[r] = { coefficientType: 'None', detailsCollapsed: false };
                 if (!scenarioData.rubroOrder.gastos.includes(r)) scenarioData.rubroOrder.gastos.push(r);
             });
             sampleIngresosRubros.forEach(r => {
@@ -2271,7 +2271,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add to global settings
             appState.settings.rubros[type].push(newRubroName);
             if (type === 'gastos' && !appState.settings.rubroConfig[newRubroName]) {
-                appState.settings.rubroConfig[newRubroName] = { coefficientType: 'None', detailsCollapsed: true };
+                appState.settings.rubroConfig[newRubroName] = { coefficientType: 'None', detailsCollapsed: false };
             }
 
             // Initialize data structures for this new rubro in ALL existing scenarios
@@ -2828,3 +2828,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
     
+
+
+// Agregar listeners a botones globales para expandir/colapsar todo
+document.addEventListener('DOMContentLoaded', () => {
+    const expandAllBtnGastos = document.getElementById('expand-all-gastos');
+    const collapseAllBtnGastos = document.getElementById('collapse-all-gastos');
+    const expandAllBtnIngresos = document.getElementById('expand-all-ingresos');
+    const collapseAllBtnIngresos = document.getElementById('collapse-all-ingresos');
+
+    if (expandAllBtnGastos) expandAllBtnGastos.onclick = () => toggleAllRubros('gastos', false);
+    if (collapseAllBtnGastos) collapseAllBtnGastos.onclick = () => toggleAllRubros('gastos', true);
+    if (expandAllBtnIngresos) expandAllBtnIngresos.onclick = () => toggleAllRubros('ingresos', false);
+    if (collapseAllBtnIngresos) collapseAllBtnIngresos.onclick = () => toggleAllRubros('ingresos', true);
+});
+
+function toggleAllRubros(type, collapse) {
+    const config = appState.settings.rubroConfig || {};
+    const scenarioData = getCurrentScenarioData();
+    if (!scenarioData || !scenarioData.rubroOrder) return;
+
+    const rubros = scenarioData.rubroOrder[type] || [];
+    rubros.forEach(rubro => {
+        config[rubro] = config[rubro] || {};
+        config[rubro].detailsCollapsed = collapse;
+    });
+
+    updateUI();
+}
