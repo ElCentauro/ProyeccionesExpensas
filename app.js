@@ -2831,3 +2831,39 @@
              // Recalculate to update totals to zero and refresh UI
              calculateAll(scenario); // Handles success message
         }
+
+
+function renderDetalleTabla(tablaId, data, tipo) {
+    const tbody = document.querySelector(`#${tablaId} tbody`);
+    tbody.innerHTML = ''; // Limpiar contenido previo
+
+    const rubros = Object.keys(data);
+    rubros.forEach(rubro => {
+        const rubroRow = document.createElement("tr");
+        rubroRow.classList.add("rubro-total-row", "collapsed");
+        rubroRow.innerHTML = `<td>${rubro}</td>`; // Solo el nombre del rubro, columnas se agregan en otro paso
+        tbody.appendChild(rubroRow);
+
+        const detalles = Object.keys(data[rubro]?.detailsData || {});
+        detalles.forEach(detalle => {
+            const fila = document.createElement("tr");
+            fila.classList.add("detail-row", "hidden");
+            fila.innerHTML = `<td>${detalle}</td>`; // También, columnas se agregan en otro paso
+            tbody.appendChild(fila);
+        });
+
+        // Toggle expand/collapse
+        rubroRow.addEventListener("click", () => {
+            rubroRow.classList.toggle("collapsed");
+            const nextRows = [];
+            let next = rubroRow.nextElementSibling;
+            while (next && next.classList.contains("detail-row")) {
+                nextRows.push(next);
+                next = next.nextElementSibling;
+            }
+            nextRows.forEach(row => {
+                row.classList.toggle("hidden");
+            });
+        });
+    });
+}
