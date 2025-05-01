@@ -1067,7 +1067,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 plugins: {
                     legend: {
                         position: 'bottom',
-                        labels: { color: textColor, boxWidth: 15, padding: 20 }
+                        labels: {
+            font: { size: 13.2 }, color: textColor, boxWidth: 15, padding: 20 }
                     },
                     tooltip: {
                         backgroundColor: hexToRgba(getComputedStyle(document.documentElement).getPropertyValue('--card-bg').trim(), 0.9),
@@ -1102,6 +1103,7 @@ document.addEventListener('DOMContentLoaded', () => {
                      legend: {
                          position: 'right',
                          labels: {
+            font: { size: 13.2 },
                             color: textColor, boxWidth: 15, padding: 15,
                              generateLabels: chart => {
                                 const data = chart.data;
@@ -1116,7 +1118,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                         fillStyle: dataset.backgroundColor[i],
                                         strokeStyle: dataset.borderColor || dataset.backgroundColor[i],
                                         lineWidth: dataset.borderWidth || 0,
-                                        hidden: isNaN(value) || chart.getDataVisibility(i), index: i
+                                        index: i
                                     };
                                 });
                              }
