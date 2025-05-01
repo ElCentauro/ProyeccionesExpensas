@@ -1837,11 +1837,10 @@
             const gastosJson = XLSX.utils.sheet_to_json(gastosSheet, { header: 1 });
             const ingresosJson = XLSX.utils.sheet_to_json(ingresosSheet, { header: 1 });
 
-            const headers = gastosJson[0].slice(2); // Desde "Ene" en adelante
+            const headers = gastosJson[0].slice(2); // desde Ene en adelante
             const current = getCurrentScenarioData();
             if (!current) return;
 
-            // Inicializar estructuras si no existen
             current.data.gastos = {};
             current.data.ingresos = {};
             current.rubroOrder.gastos = [];
