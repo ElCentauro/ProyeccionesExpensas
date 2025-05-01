@@ -821,11 +821,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  // --- Rubro Total Row ---
                  const totalRow = tbody.insertRow();
                  totalRow.classList.add('rubro-total-row');
-    // Colorea la fila si todos los meses son reales o estimados
-    const isAllReal = rubroData.every((_, i) => monthType?.[months[i]] === 'real');
-    const isAllEstimado = rubroData.every((_, i) => monthType?.[months[i]] === 'estimado');
-    if (isAllReal) {
-        totalRow.style.backgroundColor = '#d4edda'; // Amarillo claro
+    // Amarillo claro
     } else if (isAllEstimado) {
         totalRow.style.backgroundColor = '#fff3cd'; // Naranja suave
     }
