@@ -775,9 +775,6 @@ const tableId = `${type}-detail-table`;
     const annualTotalsObj = scenarioData.calculated.annualTotals[type] || {};
     
 const monthlyTotals = scenarioData.calculated.totalIngresoProyectadoMes;
-});
-        });
-    });
 }
 
 
@@ -2817,4 +2814,3 @@ document.addEventListener('DOMContentLoaded', () => {
     const ti = document.getElementById('toggleIngresos');
     if (ti) ti.addEventListener('click', () => toggleAll('ingresos'));
 });
-
