@@ -7,6 +7,104 @@ Chart.register({
         const width = chart.width;
         const height = chart.height;
         const dataset = chart.data.datasets[0];
+        if (!dataset || !dataset.data || !dataset.data.length) return;
+        const total = dataset.data.reduce((a, b) => a + b, 0);
+        ctx.save();
+        ctx.font = 'bold 1.2rem Segoe UI';
+        ctx.fillStyle = '#343a40';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`$${total.toLocaleString()}`, width / 2, height / 2);
+        ctx.restore();
+    }
+});
+
+
+
+Chart.defaults.plugins.legend.labels.boxWidth = 18;
+Chart.defaults.plugins.legend.labels.boxHeight = 12;
+Chart.defaults.plugins.legend.labels.color = '#333';
+Chart.defaults.plugins.tooltip.callbacks.label = function(context) {
+    const label = context.label || '';
+    const value = context.parsed;
+    const dataset = context.dataset;
+    const total = dataset.data.reduce((a, b) => a + b, 0);
+    const percent = ((value / total) * 100).toFixed(1);
+    return `${label}: $${value.toLocaleString()} (${percent}%)`;
+};
+function generateColors(count) {
+    const base = ['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f', '#edc948',
+                  '#b07aa1', '#ff9da7', '#9c755f', '#bab0ab'];
+    return Array.from({length: count}, (_, i) => base[i % base.length]);
+}
+
+
+
+function updateCharts() {
+    const scenarioData = getCurrentScenarioData();
+    if (!scenarioData) return;
+
+    // GRAFICO GASTOS
+    const gastosData = scenarioData.rubroTotals?.gastos || {};
+    const gastosLabels = Object.keys(gastosData);
+    const gastosValues = gastosLabels.map(r => gastosData[r]);
+    if (gastosValues.length > 0) {
+        new Chart(document.getElementById('participacionGastosChart'), {
+            type: 'doughnut',
+            data: {
+                labels: gastosLabels,
+                datasets: [{
+                    data: gastosValues,
+                    backgroundColor: generateColors(gastosLabels.length),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                cutout: '60%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 15 } },
+                    tooltip: { callbacks: Chart.defaults.plugins.tooltip.callbacks }
+                }
+            }
+        });
+    }
+
+    // GRAFICO INGRESOS
+    const ingresosData = scenarioData.rubroTotals?.ingresos || {};
+    const ingresosLabels = Object.keys(ingresosData);
+    const ingresosValues = ingresosLabels.map(r => ingresosData[r]);
+    if (ingresosValues.length > 0) {
+        new Chart(document.getElementById('participacionIngresosChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ingresosLabels,
+                datasets: [{
+                    data: ingresosValues,
+                    backgroundColor: generateColors(ingresosLabels.length),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                cutout: '60%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 15 } },
+                    tooltip: { callbacks: Chart.defaults.plugins.tooltip.callbacks }
+                }
+            }
+        });
+    }
+}
+
+
+
+Chart.register({
+    id: 'centerText',
+    beforeDraw(chart) {
+        if (chart.config.type !== 'doughnut') return;
+        const ctx = chart.ctx;
+        const width = chart.width;
+        const height = chart.height;
+        const dataset = chart.data.datasets[0];
         const total = dataset.data.reduce((a, b) => a + b, 0);
         ctx.save();
         ctx.font = 'bold 1.2rem Segoe UI';
@@ -2977,32 +3075,6 @@ function toggleAllRubrosWithEmoji(type, button) {
 
 
 
-function updateCharts() {
-    const scenarioData = getCurrentScenarioData();
-    if (!scenarioData) return;
-
-    // GRAFICO GASTOS
-    const gastosData = scenarioData.rubroTotals?.gastos || {};
-    const gastosLabels = Object.keys(gastosData);
-    const gastosValues = gastosLabels.map(r => gastosData[r]);
-    const gastosColors = generateColors(gastosLabels.length);
-
-    const gastosChart = new Chart(document.getElementById('participacionGastosChart'), {
-        type: 'doughnut',
-        data: {
-            labels: gastosLabels,
-            datasets: [{
-                data: gastosValues,
-                backgroundColor: gastosColors,
-                borderWidth: 1
-            }]
-        },
-        options: {
-            cutout: '60%',
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { padding: 15 }
                 },
                 tooltip: {
                     callbacks: Chart.defaults.plugins.tooltip.callbacks
