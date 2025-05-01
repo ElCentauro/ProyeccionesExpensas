@@ -371,7 +371,7 @@
 
                      // --- Store Base for Expensa Real --- MODIFICADO
                      // If this is the primary cuota rubro AND the first detail, store its base values
-                     if (rubro === CUOTA_RUBRO_NAME && detail === detailOrder[0]) {
+                     if (detail === CUOTA_RUBRO_NAME) {
                          for (let i = 0; i < 12; i++){
                             calculated.cuotaRealBaseMes[i] = parseFloat(baseValues[i] || 0);
                          }
