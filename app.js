@@ -18,6 +18,7 @@ Chart.defaults.plugins.tooltip.callbacks.label = function(context) {
         const STORAGE_KEY = 'expensasAppCentauroState_v2.5_Fixes'; // Version bump for fixes
         // --- MODIFICADO: Nombre Rubro Principal ---
         const CUOTA_RUBRO_NAME = "Expensas Ordinarias"; // Rubro principal para multiplicar x UF y base de Expensa Real
+        const DETAIL_EXPENSA_ORD = "Expensas Ordinarias"; // Detalle clave de Expensa Real
         const EXTRA_CUOTA_RUBRO_NAME = "Expensas Extraordinarias"; // Otro rubro a multiplicar x UF
         const SPECIAL_INGRESO_RUBROS = [CUOTA_RUBRO_NAME, EXTRA_CUOTA_RUBRO_NAME]; // Actualizado automáticamente
 
@@ -372,17 +373,14 @@ document.addEventListener('DOMContentLoaded', () => {
                      // Store BASE values in 'ingresoAjustado' for the detail table display
                      calculated.ingresoAjustado[rubro][detail] = baseValues.map(v => parseFloat(v || 0));
 
-                     // --- Store Base for Expensa Real (FIX 2025-05-02) ---
-// Capturamos CUALQUIER detalle que sea "Expensas Ordinarias"
-const isExpensaOrdinaria = rubro.toLowerCase().includes('expensas') &&
-                           detail.toLowerCase().includes('ordinarias');
-if (isExpensaOrdinaria) {
-    for (let i = 0; i < 12; i++) {
-        // Sumar por si hubiera más de un subdetalle
-        calculated.cuotaRealBaseMes[i] += parseFloat(baseValues[i] || 0);
-    }
-}
-// --- End Store Base ---
+                     // --- Store Base for Expensa Real --- MODIFICADO
+                     // If this is the primary cuota rubro AND the first detail, store its base values
+                     if (rubro.toLowerCase().includes("expensa") && detail === DETAIL_EXPENSA_ORD) {
+                         for (let i = 0; i < 12; i++){
+                            calculated.cuotaRealBaseMes[i] = parseFloat(baseValues[i] || 0);
+                         }
+                     }
+                     // --- End Store Base ---
 
                      // Calculate the contribution of this detail's BASE value to the monthly rubro total (before UF mult)
                      for (let i = 0; i < 12; i++) {
@@ -987,23 +985,24 @@ if (isExpensaOrdinaria) {
              destroyChart('participacionGastosChart');
              const ctxGastos = document.getElementById('participacionGastosChart')?.getContext('2d');
              // Filter labels based on *global* settings first, then check for > 0 value
-             let gastoLabels = (appState.settings.rubros?.gastos || []).filter(rubro =>
+             const gastoLabels = (appState.settings.rubros?.gastos || []).filter(rubro =>
                  (calculated.annualTotals?.gastos?.[rubro] || 0) > 0
              );
-             // Ordenar gastos por monto (mayor a menor) - 2025-05-02
-const gastosPairs = gastoLabels.map(lbl => ({
-    label: lbl,
-    value: calculated.annualTotals.gastos[lbl]
-})).sort((a,b) => b.value - a.value);
-gastoLabels = gastosPairs.map(p => p.label);
-const gastoData = gastosPairs.map(p => p.value);
+             
+// Ordenar pares (label, value) de mayor a menor
+const gastoPairs = gastoLabels.map(rubro => ({
+    label: rubro,
+    value: calculated.annualTotals.gastos[rubro]
+})).sort((a, b) => b.value - a.value);
+const gastoLabelsSorted = gastoPairs.map(p => p.label);
+const gastoData = gastoPairs.map(p => p.value);
              displayChartNoData('participacionGastosChart', gastoData.length === 0);
 
              if (ctxGastos && gastoData.length > 0) {
                  window.participacionGastosChart_instance = new Chart(ctxGastos, {
                      type: 'doughnut', // Changed to pie for variety, could be doughnut too
                      data: {
-                         labels: gastoLabels,
+                         labels: gastoLabelsSorted,
                          datasets: [{
                              data: gastoData,
                              backgroundColor: generateColors(gastoData.length, chartColors, 0.8), // Use helper
