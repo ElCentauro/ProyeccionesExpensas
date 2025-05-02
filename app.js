@@ -698,7 +698,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  ipcCell.textContent = `${ipcVal}%`;
                  ipcCell.classList.add('number-cell'); // Center align percentage
 
-                 // Cuota IPC ($) - Use pre-calculated value
+                 // Cuota IPC s/Gs - Use pre-calculated value
                  const cuotaIpcCell = row.insertCell();
                  cuotaIpcCell.textContent = formatCurrency(calculated.cuotaIpcMes?.[i] || 0);
                  cuotaIpcCell.classList.add('number-cell', 'estimated-month-cell'); // Mark as calculated/estimated
@@ -965,7 +965,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 yAxisID: 'yCuota' // Same axis for direct comparison
                             },
                              { // Cuota IPC (Calculated based on Cuota s/Gtos and IPC ref)
-                                label: 'Cuota IPC ($)',
+                                label: 'Cuota IPC s/Gs',
                                 data: calculated.cuotaIpcMes,
                                 borderColor: secondaryColor, // Use secondary color
                                 backgroundColor: hexToRgba(secondaryColor, 0.1),
@@ -2936,32 +2936,3 @@ function toggleAllRubrosWithEmoji(type, button) {
     button.textContent = newCollapsedState ? "▶️" : "🔽";
     updateUI();
 }
-
-
-
-// === DEBUG BLOCK: Expensa Real tracing ===
-const DEBUG_EXPENSA_REAL = true;
-
-function debugExpensaReal(scenarioData){
-    const calculatedDebug = Array(12).fill(0);
-    Object.entries(scenarioData.data.ingresos || {}).forEach(([rubro, rubroObj]) => {
-        Object.entries(rubroObj.detailsData || {}).forEach(([detail, baseValues]) => {
-            const isDetalleOrdinaria = detail.trim().toLowerCase() === 'expensas ordinarias';
-            const isRubroExpensa     = rubro.trim().toLowerCase().includes('expensa');
-            if(DEBUG_EXPENSA_REAL){
-                console.log('👉 Analizando', { rubro, detail, isRubroExpensa, isDetalleOrdinaria, baseValues });
-            }
-            if(isRubroExpensa && isDetalleOrdinaria){
-                for(let i=0;i<12;i++){
-                    const montoMes = parseFloat(baseValues[i] || 0);
-                    calculatedDebug[i] += montoMes;
-                }
-            }
-        });
-    });
-    if(DEBUG_EXPENSA_REAL){
-        console.log('✅ Resultado cuotaRealBaseMes', calculatedDebug);
-    }
-    return calculatedDebug;
-}
-// === END DEBUG BLOCK ===
