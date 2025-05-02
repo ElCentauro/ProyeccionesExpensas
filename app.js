@@ -1,4 +1,15 @@
 
+// === Configuración de títulos editables (Dashboard) ===
+const DASHBOARD_COL_LABELS_DEFAULT = [
+  'Gasto ($)',          // 1
+  'Fondo ($)',          // 2
+  'Cuota s/Gs ($)',     // 3
+  'IPC (%)',            // 4
+  'Cuota IPC ($)',      // 5
+  'Expensa Real ($)'    // 6
+];
+
+
 Chart.defaults.plugins.legend.labels.boxWidth = 20;
 Chart.defaults.plugins.legend.labels.boxHeight = 10;
 Chart.defaults.plugins.legend.labels.color = '#333';
@@ -531,6 +542,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Actualización de la Interfaz (UI) ---
         function initUI() {
+  renderDashboardHeader();
              document.getElementById('exercise-year')?.setAttribute('value', appState.currentYear);
     const footerYear = document.getElementById('footer-year');
     if (footerYear) {
@@ -541,6 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function updateUI() {
+  renderDashboardHeader();
              console.log("Actualizando UI completa...");
              const scenarioData = getCurrentScenarioData(); // Get current data
              if (!scenarioData) {
@@ -2965,3 +2978,42 @@ function debugExpensaReal(scenarioData){
     return calculatedDebug;
 }
 // === END DEBUG BLOCK ===
+
+
+
+// === Renderiza encabezados editables ===
+function renderDashboardHeader() {
+  const thead = document.getElementById('dashboard-summary')?.querySelector('thead');
+  if (!thead) return;
+  thead.innerHTML = '';
+  const tr = thead.insertRow();
+  const thMes = document.createElement('th');
+  thMes.textContent = 'Mes';
+  tr.appendChild(thMes);
+
+  appState.settings.dashboardColLabels.forEach((label, idx) => {
+    const th = document.createElement('th');
+
+    const numSpan = document.createElement('span');
+    numSpan.textContent = `${idx + 1}. `;
+    numSpan.style.fontWeight = '600';
+
+    const editSpan = document.createElement('span');
+    editSpan.textContent = label;
+    editSpan.contentEditable = true;
+    editSpan.dataset.colIdx = idx;
+    editSpan.onblur = handleDashboardHeaderEdit;
+
+    th.appendChild(numSpan);
+    th.appendChild(editSpan);
+    tr.appendChild(th);
+  });
+}
+
+function handleDashboardHeaderEdit(e) {
+  const idx = parseInt(e.target.dataset.colIdx, 10);
+  const newText = e.target.textContent.trim() || DASHBOARD_COL_LABELS_DEFAULT[idx];
+  appState.settings.dashboardColLabels[idx] = newText;
+  localStorage.setItem('dashboardColLabels', JSON.stringify(appState.settings.dashboardColLabels));
+}
+
