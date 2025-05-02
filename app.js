@@ -642,11 +642,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function updateDashboardTables(scenarioData) {
-  // [PATCH] recalc before render
-  if (window.DEBUG_PROJECTION) console.log('[DEBUG] recalc before render');
-  if (scenarioData) calculateAll(scenarioData);
-
-             if (!scenarioData || !scenarioData.calculated) {
+if (!scenarioData || !scenarioData.calculated) {
                  console.error("Faltan datos calculados en updateDashboardTables. Renderizando vacío.");
                  renderEmptyState();
                  return;
