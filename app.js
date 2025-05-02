@@ -1,4 +1,3 @@
-window.DEBUG_PROJECTION = true;
 
 Chart.defaults.plugins.legend.labels.boxWidth = 20;
 Chart.defaults.plugins.legend.labels.boxHeight = 10;
@@ -235,7 +234,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Lógica de Negocio y Cálculos ---
         function calculateAll(scenarioData) {
-  if (window.DEBUG_PROJECTION) console.log('[DEBUG] calculateAll called');
              console.log(`Recalculando TODO para: ${scenarioData?.year} - ${scenarioData?.scenarioName}`);
              if (!scenarioData) { console.error("CalculateAll: No scenario data provided."); renderEmptyState(); return; }
 
@@ -642,7 +640,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function updateDashboardTables(scenarioData) {
-if (!scenarioData || !scenarioData.calculated) {
+             if (!scenarioData || !scenarioData.calculated) {
                  console.error("Faltan datos calculados en updateDashboardTables. Renderizando vacío.");
                  renderEmptyState();
                  return;
@@ -2267,7 +2265,7 @@ const gastoData = gastoPairs.map(p => p.value);
                      // calculateAll handles success message
                      calculateAll(scenarioData);
                  } else {
-                     if(scenarioData){calculateAll(scenarioData);} showSnackbar("Configuración guardada, pero no hay escenario activo para recalcular.", false, 'warning');
+                     showSnackbar("Configuración guardada, pero no hay escenario activo para recalcular.", false, 'warning');
                  }
              } else {
                  showSnackbar("Configuración guardada (sin cambios que requieran recálculo).", false, 'success');
@@ -2969,18 +2967,12 @@ function debugExpensaReal(scenarioData){
 // === END DEBUG BLOCK ===
 
 
-// === Patch: always recalc after saving settings ===
-(function() {
-  const originalSaveSettings = saveSettings;
-  saveSettings = function(...args) {
-      originalSaveSettings.apply(this, args);
-
-      try {
-        const scenarioData = getCurrentScenarioData && getCurrentScenarioData();
-        if (scenarioData) {
-          console.log('[Patch] Recalculando escenario activo tras guardar settings...');
-          calculateAll(scenarioData);
-        }
-      } catch (e) { console.error('[Patch] Error en recálculo post-settings', e); }
-  };
-})();
+/* ==== Persist full appState into localStorage ==== */
+function persistAppState() {
+  try {
+    localStorage.setItem('appState', JSON.stringify(appState));
+    // opcional: guardar indiceConfig por compatibilidad
+    if (appState.indicesConfig)
+      localStorage.setItem('indicesConfig', JSON.stringify(appState.indicesConfig));
+  } catch(e) { console.warn('No se pudo persistir appState', e); }
+}
