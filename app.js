@@ -2936,3 +2936,32 @@ function toggleAllRubrosWithEmoji(type, button) {
     button.textContent = newCollapsedState ? "▶️" : "🔽";
     updateUI();
 }
+
+
+
+// === DEBUG BLOCK: Expensa Real tracing ===
+const DEBUG_EXPENSA_REAL = true;
+
+function debugExpensaReal(scenarioData){
+    const calculatedDebug = Array(12).fill(0);
+    Object.entries(scenarioData.data.ingresos || {}).forEach(([rubro, rubroObj]) => {
+        Object.entries(rubroObj.detailsData || {}).forEach(([detail, baseValues]) => {
+            const isDetalleOrdinaria = detail.trim().toLowerCase() === 'expensas ordinarias';
+            const isRubroExpensa     = rubro.trim().toLowerCase().includes('expensa');
+            if(DEBUG_EXPENSA_REAL){
+                console.log('👉 Analizando', { rubro, detail, isRubroExpensa, isDetalleOrdinaria, baseValues });
+            }
+            if(isRubroExpensa && isDetalleOrdinaria){
+                for(let i=0;i<12;i++){
+                    const montoMes = parseFloat(baseValues[i] || 0);
+                    calculatedDebug[i] += montoMes;
+                }
+            }
+        });
+    });
+    if(DEBUG_EXPENSA_REAL){
+        console.log('✅ Resultado cuotaRealBaseMes', calculatedDebug);
+    }
+    return calculatedDebug;
+}
+// === END DEBUG BLOCK ===
