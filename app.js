@@ -1,3 +1,4 @@
+window.DEBUG_PROJECTION = true;
 
 Chart.defaults.plugins.legend.labels.boxWidth = 20;
 Chart.defaults.plugins.legend.labels.boxHeight = 10;
@@ -234,6 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Lógica de Negocio y Cálculos ---
         function calculateAll(scenarioData) {
+  if (window.DEBUG_PROJECTION) console.log('[DEBUG] calculateAll called');
              console.log(`Recalculando TODO para: ${scenarioData?.year} - ${scenarioData?.scenarioName}`);
              if (!scenarioData) { console.error("CalculateAll: No scenario data provided."); renderEmptyState(); return; }
 
