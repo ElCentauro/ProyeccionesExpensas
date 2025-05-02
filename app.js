@@ -707,6 +707,13 @@ document.addEventListener('DOMContentLoaded', () => {
                  const cuotaRealCell = row.insertCell();
                  cuotaRealCell.textContent = formatCurrency(calculated.cuotaRealBaseMes?.[i] || 0);
                  cuotaRealCell.classList.add('number-cell', 'real-month-cell'); // Mark as 'real' input visually
+            // --- Row Coloring Based on Real vs Proyectado (Added) ---
+            const gastoVal = parseFloat(calculated.totalGastoProyectadoMes?.[i] || 0);
+            const cuotaGsVal = parseFloat(calculated.cuotaSobreGastosMes?.[i] || 0);
+            const ipcNum = parseFloat(ipcSnapshot?.[i] || 0);
+            const isRealMonth = (gastoVal !== 0 || cuotaGsVal !== 0 || ipcNum !==0);
+            row.style.backgroundColor = isRealMonth ? '#d4edda' : '#ffe6cc';
+            // ---------------------------------------------------------
              }
 
              // Populate tfoot with annual totals
