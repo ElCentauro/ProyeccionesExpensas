@@ -2939,53 +2939,29 @@ function toggleAllRubrosWithEmoji(type, button) {
 
 
 
-/* === PATCH SAFE: rename Cuota IPC and add Expensas Real × IPC once on load === */
-window.addEventListener('load', () => {
-    try {
-        const tbl = document.querySelectorAll('table')[0];
-        if (!tbl) return;
-        const theadRow = tbl.querySelector('thead tr');
-        const ths = theadRow ? theadRow.querySelectorAll('th') : [];
-        let ipcIdx = -1;
-        ths.forEach((th, idx) => {
-            if (th.textContent.trim().toLowerCase().includes('cuota ipc')) {
-                th.textContent = 'Cuota IPC s/Gs';
-                ipcIdx = idx;
+// === DEBUG BLOCK: Expensa Real tracing ===
+const DEBUG_EXPENSA_REAL = true;
+
+function debugExpensaReal(scenarioData){
+    const calculatedDebug = Array(12).fill(0);
+    Object.entries(scenarioData.data.ingresos || {}).forEach(([rubro, rubroObj]) => {
+        Object.entries(rubroObj.detailsData || {}).forEach(([detail, baseValues]) => {
+            const isDetalleOrdinaria = detail.trim().toLowerCase() === 'expensas ordinarias';
+            const isRubroExpensa     = rubro.trim().toLowerCase().includes('expensa');
+            if(DEBUG_EXPENSA_REAL){
+                console.log('👉 Analizando', { rubro, detail, isRubroExpensa, isDetalleOrdinaria, baseValues });
+            }
+            if(isRubroExpensa && isDetalleOrdinaria){
+                for(let i=0;i<12;i++){
+                    const montoMes = parseFloat(baseValues[i] || 0);
+                    calculatedDebug[i] += montoMes;
+                }
             }
         });
-        if (ipcIdx === -1) return; // can't find IPC column
-
-        // avoid duplicate header
-        if (![...ths].some(th => th.textContent.trim() === 'Expensas Real × IPC')) {
-            const newTh = document.createElement('th');
-            newTh.textContent = 'Expensas Real × IPC';
-            theadRow.appendChild(newTh);
-        }
-
-        // compute series
-        const expReal = (window.calculated?.cuotaRealBaseMes) || [];
-        const ipcPct  = (window.scenarioData?.parametros?.ipcPorcentaje) || [];
-        const serie   = Array(12).fill(0);
-        if (expReal.length) {
-            serie[0] = (expReal[0] || 0) * (ipcPct[0] || 0) / 100;
-            for (let m = 1; m < 12; m++) {
-                const prev = serie[m-1];
-                const factor = (ipcPct[m] || 0) / 100;
-                serie[m] = prev + prev * factor;
-            }
-        }
-
-        // append cells
-        const rows = tbl.querySelectorAll('tbody tr');
-        rows.forEach((tr, i) => {
-            const td = document.createElement('td');
-            const val = serie[i] || 0;
-            td.textContent = typeof formatCurrency === 'function'
-                ? formatCurrency(val)
-                : val.toLocaleString('es-AR',{style:'currency',currency:'ARS'});
-            tr.appendChild(td);
-        });
-    } catch (e) {
-        console.error('SAFE PATCH error:', e);
+    });
+    if(DEBUG_EXPENSA_REAL){
+        console.log('✅ Resultado cuotaRealBaseMes', calculatedDebug);
     }
-});
+    return calculatedDebug;
+}
+// === END DEBUG BLOCK ===
