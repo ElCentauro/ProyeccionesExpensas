@@ -992,7 +992,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
              if (ctxGastos && gastoData.length > 0) {
                  window.participacionGastosChart_instance = new Chart(ctxGastos, {
-                     type: 'pie', // Changed to pie for variety, could be doughnut too
+                     type: 'doughnut', // Changed to pie for variety, could be doughnut too
                      data: {
                          labels: gastoLabels,
                          datasets: [{
@@ -1019,7 +1019,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
              if (ctxIngresos && ingresoData.length > 0) {
                  window.participacionIngresosChart_instance = new Chart(ctxIngresos, {
-                     type: 'pie', // Changed to pie
+                     type: 'doughnut', // Changed to pie
                      data: {
                          labels: ingresoLabels,
                          datasets: [{
@@ -1116,7 +1116,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                         fillStyle: dataset.backgroundColor[i],
                                         strokeStyle: dataset.borderColor || dataset.backgroundColor[i],
                                         lineWidth: dataset.borderWidth || 0,
-                                        hidden: isNaN(value) || chart.getDataVisibility(i), index: i
+                                         index: i
                                     };
                                 });
                              }
