@@ -166,3 +166,64 @@ renderDashboard(); // inicial
   };
   bar.append(btnExp,btnImp,inp);
 })();
+
+
+// === Backup Buttons Bar Injection ===
+document.addEventListener('DOMContentLoaded', () => {
+  let bar = document.getElementById('toolsBar');
+  if (!bar) {
+    const hdr = document.querySelector('header .container') || document.body;
+    bar = document.createElement('div');
+    bar.id='toolsBar';
+    bar.style.display='flex';
+    bar.style.gap='8px';
+    bar.style.justifyContent='flex-end';
+    bar.style.margin='8px 0';
+    hdr.appendChild(bar);
+  }
+});
+
+
+// === Backup buttons functions ===
+function exportLocalStorageBackup(){
+  const data={};
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i); data[k]=localStorage.getItem(k);
+  }
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='backup_localStorage.json';
+  a.click(); URL.revokeObjectURL(url);
+}
+function importLocalStorageBackup(file){
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      Object.entries(data).forEach(([k,v])=>localStorage.setItem(k,v));
+      alert('Backup importado. Recarga la página.');
+    }catch(e){alert('Archivo inválido');}
+  };
+  reader.readAsText(file);
+}
+// Crear botones
+document.addEventListener('DOMContentLoaded', ()=>{
+  const bar=document.getElementById('toolsBar');
+  if(bar){
+    const btnDown=document.createElement('button');
+    btnDown.textContent='⬇️';
+    btnDown.title='Exportar Backup';
+    btnDown.onclick=exportLocalStorageBackup;
+    const btnUp=document.createElement('button');
+    btnUp.textContent='⬆️';
+    btnUp.title='Importar Backup';
+    const inp=document.createElement('input');
+    inp.type='file';
+    inp.accept='.json';
+    inp.style.display='none';
+    btnUp.onclick=()=>inp.click();
+    inp.onchange=e=>{ if(e.target.files[0]) importLocalStorageBackup(e.target.files[0]); };
+    bar.append(btnDown,btnUp,inp);
+  }
+});
