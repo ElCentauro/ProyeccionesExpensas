@@ -373,9 +373,12 @@ document.addEventListener('DOMContentLoaded', () => {
                      calculated.ingresoAjustado[rubro][detail] = baseValues.map(v => parseFloat(v || 0));
 
                      // --- Store Base for Expensa Real (FIX 2025-05-02) ---
-// Suma todas las filas del rubro "Expensas Ordinarias" sin multiplicar por UF
-if (rubro === CUOTA_RUBRO_NAME) {
+// Capturamos CUALQUIER detalle que sea "Expensas Ordinarias"
+const isExpensaOrdinaria = rubro.toLowerCase().includes('expensas') &&
+                           detail.toLowerCase().includes('ordinarias');
+if (isExpensaOrdinaria) {
     for (let i = 0; i < 12; i++) {
+        // Sumar por si hubiera más de un subdetalle
         calculated.cuotaRealBaseMes[i] += parseFloat(baseValues[i] || 0);
     }
 }
@@ -984,10 +987,16 @@ if (rubro === CUOTA_RUBRO_NAME) {
              destroyChart('participacionGastosChart');
              const ctxGastos = document.getElementById('participacionGastosChart')?.getContext('2d');
              // Filter labels based on *global* settings first, then check for > 0 value
-             const gastoLabels = (appState.settings.rubros?.gastos || []).filter(rubro =>
+             let gastoLabels = (appState.settings.rubros?.gastos || []).filter(rubro =>
                  (calculated.annualTotals?.gastos?.[rubro] || 0) > 0
              );
-             const gastoData = gastoLabels.map(rubro => calculated.annualTotals.gastos[rubro]);
+             // Ordenar gastos por monto (mayor a menor) - 2025-05-02
+const gastosPairs = gastoLabels.map(lbl => ({
+    label: lbl,
+    value: calculated.annualTotals.gastos[lbl]
+})).sort((a,b) => b.value - a.value);
+gastoLabels = gastosPairs.map(p => p.label);
+const gastoData = gastosPairs.map(p => p.value);
              displayChartNoData('participacionGastosChart', gastoData.length === 0);
 
              if (ctxGastos && gastoData.length > 0) {
