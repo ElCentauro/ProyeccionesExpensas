@@ -1,16 +1,108 @@
 
-body{font-family:Segoe UI,Tahoma,Arial,sans-serif;margin:0;padding:0;background:#fafafa;color:#333}
-header{background:#0062a3;color:#fff;padding:10px 20px}
-h1{margin:0;font-size:1.4rem}
-#actions{margin:10px 20px}
-button{padding:6px 12px;margin-right:8px;border:none;border-radius:4px;background:#0062a3;color:#fff;cursor:pointer}
-button:hover{background:#004b7b}
-table{border-collapse:collapse;width:100%;margin-top:10px}
-th,td{border:1px solid #ccc;padding:4px;text-align:right}
-th:first-child,td:first-child{text-align:left}
-tr.real-row{background:#d4edda}      /* verde claro */
-tr.proj-row{background:#ffe6cc}      /* naranja claro */
-.modal{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.4)}
-.modal.hidden{display:none}
-.modal-content{background:#fff;padding:20px;border-radius:6px;width:90%;max-width:800px;max-height:90vh;overflow:auto}
-#toolsBar{display:flex;gap:8px;justify-content:flex-end;margin:10px 20px}
+/* Reset básico */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    background-color: #f4f6f9;
+    color: #333;
+    padding: 20px;
+}
+
+/* Encabezados */
+h1, h2, h3, h4, h5 {
+    color: #1d3557;
+    margin-bottom: 10px;
+}
+
+/* Botones modernos */
+button {
+    background: linear-gradient(135deg, #1d3557, #457b9d);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    margin: 4px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: background 0.3s ease;
+}
+
+button:hover {
+    background: linear-gradient(135deg, #457b9d, #1d3557);
+}
+
+/* Tablas limpias y modernas */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+th, td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+th {
+    background-color: #f1f3f5;
+    text-align: center;
+    font-weight: 600;
+    color: #1d3557;
+}
+
+td {
+    text-align: right;
+}
+
+tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Sección de gráficos */
+.chart-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    gap: 30px;
+    margin: 20px 0;
+}
+
+.chart-box {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    padding: 20px;
+    max-width: 500px;
+    width: 100%;
+}
+
+.chart-box h5 {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+    color: #3b82f6;
+}
+
+canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Emoji toggle buttons */
+#toggle-gastos, #toggle-ingresos {
+    font-size: 1.2rem;
+    background: none;
+    border: none;
+    color: #1d3557;
+    cursor: pointer;
+    margin-left: 10px;
+}
