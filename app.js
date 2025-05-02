@@ -2939,9 +2939,9 @@ function toggleAllRubrosWithEmoji(type, button) {
 
 
 
-/* === PARCHE v4: renombrar Cuota IPC y añadir Cuota Real × IPC === */
+/* === PARCHE v4: renombrar Cuota IPC y añadir Expensas Real × IPC === */
 (function(){
-    const NEW_COL_TITLE = 'Cuota Real × IPC';
+    const NEW_COL_TITLE   = 'Expensas Real × IPC';
     const IPC_OLD_TITLE = 'Cuota IPC ($)';
     const IPC_NEW_TITLE = 'Cuota IPC s/Gs';
 
@@ -2996,7 +2996,7 @@ function toggleAllRubrosWithEmoji(type, button) {
         // insert header
         const newTh = document.createElement('th');
         newTh.textContent = NEW_COL_TITLE;
-        ths[ipcIdx].after(newTh);
+        ths[ths.length-1].after(newTh);
 
         const values = computeRealIPC();
 
