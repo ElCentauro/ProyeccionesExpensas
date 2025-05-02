@@ -2965,3 +2965,20 @@ function debugExpensaReal(scenarioData){
     return calculatedDebug;
 }
 // === END DEBUG BLOCK ===
+
+
+// === Patch: always recalc after saving settings ===
+(function() {
+  const originalSaveSettings = saveSettings;
+  saveSettings = function(...args) {
+      originalSaveSettings.apply(this, args);
+
+      try {
+        const scenarioData = getCurrentScenarioData && getCurrentScenarioData();
+        if (scenarioData) {
+          console.log('[Patch] Recalculando escenario activo tras guardar settings...');
+          calculateAll(scenarioData);
+        }
+      } catch (e) { console.error('[Patch] Error en recálculo post-settings', e); }
+  };
+})();
