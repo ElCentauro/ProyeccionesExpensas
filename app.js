@@ -2978,3 +2978,36 @@ function debugExpensaReal(scenarioData){
     return calculatedDebug;
 }
 // === END DEBUG BLOCK ===
+
+/* ==== Proyección de Gastos por Índice (v2) ==== */
+function recalculateProjectedExpenses() {
+  if (!appState.gastosDetalle || !appState.indicesConfig) return;
+
+  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+  Object.keys(appState.gastosDetalle).forEach(rubro => {
+    const valores = appState.gastosDetalle[rubro]; // Array[12] con números
+    if (!Array.isArray(valores)) return;
+
+    // Buscar el último mes Real (valor distinto de 0)
+    let lastRealIdx = -1;
+    for (let i = valores.length - 1; i >= 0; i--) {
+      if (parseFloat(valores[i] || 0) !== 0) { lastRealIdx = i; break; }
+    }
+    if (lastRealIdx === -1) return; // rubro sin datos reales
+
+    // Proyectar desde el mes siguiente
+    for (let m = lastRealIdx + 1; m < 12; m++) {
+      const indice = (appState.indicesConfig?.[rubro]?.[m] ?? null);
+      if (indice === null || indice === undefined) {
+        valores[m] = 0; // si no hay índice, queda en 0
+      } else {
+        const factor = 1 + (parseFloat(indice) / 100);
+        const base = parseFloat(valores[m - 1]) || 0;
+        valores[m] = Math.round(base * factor * 100) / 100;
+      }
+    }
+  });
+}
+/* ==== fin proyección ==== */
+
