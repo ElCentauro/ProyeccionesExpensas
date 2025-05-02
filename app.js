@@ -2939,150 +2939,87 @@ function toggleAllRubrosWithEmoji(type, button) {
 
 
 
-/* ===  PARCHE: título + nueva columna Cuota Real × IPC  === */
-(function () {
-    const NEW_COL_TITLE   = 'Cuota Real × IPC';
-    const IPC_TITLE_OLD   = 'Cuota IPC ($)';
-    const IPC_TITLE_NEW   = 'Cuota IPC s/Gs';
+/* === PARCHE v4: renombrar Cuota IPC y añadir Cuota Real × IPC === */
+(function(){
+    const NEW_COL_TITLE = 'Cuota Real × IPC';
+    const IPC_OLD_TITLE = 'Cuota IPC ($)';
+    const IPC_NEW_TITLE = 'Cuota IPC s/Gs';
 
-    // Enganchamos después de cada updateUI
-    const originalUpdateUI = window.updateUI || function(){};
-    window.updateUI = function () {
-        originalUpdateUI.apply(this, arguments);
-        setTimeout(applyPatch, 0); // deja que el DOM se refresque
-    };
-
-    function applyPatch() {
-        const resumenTable = document.querySelector('#resumen-mensual-general table');
-        if (!resumenTable) return;
-
-        // ---- 1) Renombrar cabecera ----
-        const ths = resumenTable.querySelectorAll('thead th');
-        let ipcIndex = -1;
-        ths.forEach((th, idx) => {
-            if (th.textContent.trim() === IPC_TITLE_OLD) {
-                th.textContent = IPC_TITLE_NEW;
-                ipcIndex = idx;
-            }
-        });
-        if (ipcIndex === -1) return; // no encontró cabecera → salimos
-
-        // Si la columna nueva ya existe, no duplicamos
-        const exists = Array.from(ths).some(th => th.textContent.trim() === NEW_COL_TITLE);
-        if (!exists) {
-            // Insertamos cabecera
-            const newTh = document.createElement('th');
-            newTh.textContent = NEW_COL_TITLE;
-            ths[ipcIndex].after(newTh);
-
-            // ---- 2) Generar datos ----
-            const expReal = (window.calculated?.cuotaRealBaseMes) || [];
-            const ipcPct  = (window.scenarioData?.parametros?.ipcPorcentaje) || [];
-
-            const cuotaRealXIPCMes = Array(12).fill(0);
-            if (expReal.length) {
-                cuotaRealXIPCMes[0] = (expReal[0] || 0) * (ipcPct[0] || 0) / 100;
-                for (let m = 1; m < 12; m++) {
-                    const prev = cuotaRealXIPCMes[m - 1];
-                    const ipc  = (ipcPct[m] || 0) / 100;
-                    cuotaRealXIPCMes[m] = prev + (prev * ipc);
-                }
-            }
-
-            // ---- 3) Insertar celdas fila por fila ----
-            const bodyRows = resumenTable.querySelectorAll('tbody tr');
-            bodyRows.forEach((tr, idx) => {
-                const cell = document.createElement('td');
-                cell.textContent = typeof formatCurrency === 'function'
-                    ? formatCurrency(cuotaRealXIPCMes[idx] || 0)
-                    : (cuotaRealXIPCMes[idx] || 0).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
-                tr.children[ipcIndex].after(cell);
-            });
-        }
-    }
-})();
-
-
-
-/* === PARCHE v3: cabecera genérica + columna Cuota Real × IPC === */
-(function () {
-    const NEW_COL_TITLE   = 'Cuota Real × IPC';
-    const IPC_TITLES_OLD  = ['Cuota IPC ($)', 'Cuota IPC $', 'Cuota IPC', 'Cuota IPC (s/Gs)', 'Cuota IPC s/Gs']; // posibles
-    const IPC_TITLE_NEW   = 'Cuota IPC s/Gs';
-
-    function renameOrFindIPC(ths){
-        let ipcIdx = -1;
-        ths.forEach((th, idx) => {
-            const txt = th.textContent.trim();
-            if (IPC_TITLES_OLD.includes(txt)) {
-                th.textContent = IPC_TITLE_NEW;
-                ipcIdx = idx;
-            }
-        });
-        // Si no coincidieron exactos, busca por coincidencia parcial
-        if (ipcIdx === -1){
-            ths.forEach((th, idx) => {
-                const t = th.textContent.toLowerCase();
-                if (t.includes('ipc') && t.includes('cuota')){
-                    th.textContent = IPC_TITLE_NEW;
-                    ipcIdx = idx;
-                }
-            });
-        }
-        return ipcIdx;
+    function formatAR(val){
+        return typeof formatCurrency==='function'
+            ? formatCurrency(val)
+            : val.toLocaleString('es-AR',{style:'currency',currency:'ARS'});
     }
 
-    function applyPatch() {
-        const tbl = document.querySelector('table'); // el primero grande
-        if (!tbl) return;
-        const ths = tbl.querySelectorAll('thead th');
-        if (!ths.length) return;
-
-        const ipcIndex = renameOrFindIPC(ths);
-        if (ipcIndex === -1) return;
-
-        // evitar duplicar
-        if ([...ths].some(th => th.textContent.trim() === NEW_COL_TITLE)) return;
-
-        // agregar cabecera
-        const newTh = document.createElement('th');
-        newTh.textContent = NEW_COL_TITLE;
-        ths[ipcIndex].after(newTh);
-
-        // datos
+    function computeRealIPC(){
         const expReal = (window.calculated?.cuotaRealBaseMes) || [];
         const ipcPct  = (window.scenarioData?.parametros?.ipcPorcentaje) || [];
         const arr = Array(12).fill(0);
-        if (expReal.length){
-            arr[0] = (expReal[0] || 0) * (ipcPct[0] || 0) / 100;
-            for (let m=1;m<12;m++){
-                const prev=arr[m-1];
-                const factor=(ipcPct[m]||0)/100;
-                arr[m]=prev+prev*factor;
+        if(expReal.length){
+            arr[0] = (expReal[0]||0) * (ipcPct[0]||0) / 100;
+            for(let m=1;m<12;m++){
+                const prev = arr[m-1];
+                const factor = (ipcPct[m]||0)/100;
+                arr[m] = prev + prev*factor;
             }
         }
+        return arr;
+    }
+
+    function apply(){
+        const tbl = document.querySelectorAll('table')[0]; // primera tabla
+        if(!tbl) return;
+        const ths = tbl.querySelectorAll('thead th');
+        if(!ths.length) return;
+
+        let ipcIdx=-1;
+        ths.forEach((th,idx)=>{
+            if(th.textContent.trim()===IPC_OLD_TITLE){
+                th.textContent = IPC_NEW_TITLE;
+                ipcIdx = idx;
+            }
+        });
+        if(ipcIdx===-1){
+            // fallback partial match
+            ths.forEach((th,idx)=>{
+                if(th.textContent.trim().toLowerCase().includes('cuota ipc')){
+                    th.textContent = IPC_NEW_TITLE;
+                    ipcIdx = idx;
+                }
+            })
+        }
+        if(ipcIdx===-1) return;
+
+        // check if new column already present
+        if(Array.from(ths).some(th=>th.textContent.trim()===NEW_COL_TITLE)) return;
+
+        // insert header
+        const newTh = document.createElement('th');
+        newTh.textContent = NEW_COL_TITLE;
+        ths[ipcIdx].after(newTh);
+
+        const values = computeRealIPC();
 
         const rows = tbl.querySelectorAll('tbody tr');
         rows.forEach((tr,i)=>{
-            const td=document.createElement('td');
-            const val=arr[i]||0;
-            td.textContent = typeof formatCurrency==='function'?formatCurrency(val):val.toLocaleString('es-AR',{style:'currency',currency:'ARS'});
-            tr.children[ipcIndex].after(td);
-        })
+            const td = document.createElement('td');
+            const val = values[i]||0;
+            td.textContent = formatAR(val);
+            tr.children[ipcIdx].after(td);
+        });
     }
 
-    function delayedPatch(){
-        setTimeout(applyPatch,500); // after DOM updates
+    function schedule(){
+        setTimeout(apply, 300); // slight delay
     }
 
-    // Hook common events
-    window.addEventListener('load', delayedPatch);
-    document.addEventListener('dataUpdated', delayedPatch); // custom event
-    const originalUpdateUI = window.updateUI;
-    if (typeof originalUpdateUI==='function'){
+    window.addEventListener('load', schedule);
+    document.addEventListener('dataUpdated', schedule);
+    if(typeof window.updateUI==='function'){
+        const prev = window.updateUI;
         window.updateUI = function(){
-            originalUpdateUI.apply(this,arguments);
-            delayedPatch();
+            prev.apply(this, arguments);
+            schedule();
         }
     }
 })();
