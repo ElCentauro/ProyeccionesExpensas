@@ -880,6 +880,12 @@ document.addEventListener('DOMContentLoaded', () => {
                      const cellAnnualDetail = detailRow.insertCell();
                      cellAnnualDetail.textContent = formatCurrency(annualDetailTotal);
                      cellAnnualDetail.classList.add('number-cell');
+
+                     // --- Row Coloring Based on Data Presence (Added) ---
+                     const hasData = detailValues.some(v => parseFloat(v || 0) !== 0);
+                     detailRow.style.backgroundColor = hasData ? '#d4edda' : '#ffe6cc';
+                     // -----------------------------------------------
+
                  });
                  // --- End Detail Rows ---
              });
