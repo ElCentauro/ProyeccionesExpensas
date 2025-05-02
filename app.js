@@ -3001,3 +3001,88 @@ function toggleAllRubrosWithEmoji(type, button) {
         }
     }
 })();
+
+
+
+/* === PARCHE v3: cabecera genérica + columna Cuota Real × IPC === */
+(function () {
+    const NEW_COL_TITLE   = 'Cuota Real × IPC';
+    const IPC_TITLES_OLD  = ['Cuota IPC ($)', 'Cuota IPC $', 'Cuota IPC', 'Cuota IPC (s/Gs)', 'Cuota IPC s/Gs']; // posibles
+    const IPC_TITLE_NEW   = 'Cuota IPC s/Gs';
+
+    function renameOrFindIPC(ths){
+        let ipcIdx = -1;
+        ths.forEach((th, idx) => {
+            const txt = th.textContent.trim();
+            if (IPC_TITLES_OLD.includes(txt)) {
+                th.textContent = IPC_TITLE_NEW;
+                ipcIdx = idx;
+            }
+        });
+        // Si no coincidieron exactos, busca por coincidencia parcial
+        if (ipcIdx === -1){
+            ths.forEach((th, idx) => {
+                const t = th.textContent.toLowerCase();
+                if (t.includes('ipc') && t.includes('cuota')){
+                    th.textContent = IPC_TITLE_NEW;
+                    ipcIdx = idx;
+                }
+            });
+        }
+        return ipcIdx;
+    }
+
+    function applyPatch() {
+        const tbl = document.querySelector('table'); // el primero grande
+        if (!tbl) return;
+        const ths = tbl.querySelectorAll('thead th');
+        if (!ths.length) return;
+
+        const ipcIndex = renameOrFindIPC(ths);
+        if (ipcIndex === -1) return;
+
+        // evitar duplicar
+        if ([...ths].some(th => th.textContent.trim() === NEW_COL_TITLE)) return;
+
+        // agregar cabecera
+        const newTh = document.createElement('th');
+        newTh.textContent = NEW_COL_TITLE;
+        ths[ipcIndex].after(newTh);
+
+        // datos
+        const expReal = (window.calculated?.cuotaRealBaseMes) || [];
+        const ipcPct  = (window.scenarioData?.parametros?.ipcPorcentaje) || [];
+        const arr = Array(12).fill(0);
+        if (expReal.length){
+            arr[0] = (expReal[0] || 0) * (ipcPct[0] || 0) / 100;
+            for (let m=1;m<12;m++){
+                const prev=arr[m-1];
+                const factor=(ipcPct[m]||0)/100;
+                arr[m]=prev+prev*factor;
+            }
+        }
+
+        const rows = tbl.querySelectorAll('tbody tr');
+        rows.forEach((tr,i)=>{
+            const td=document.createElement('td');
+            const val=arr[i]||0;
+            td.textContent = typeof formatCurrency==='function'?formatCurrency(val):val.toLocaleString('es-AR',{style:'currency',currency:'ARS'});
+            tr.children[ipcIndex].after(td);
+        })
+    }
+
+    function delayedPatch(){
+        setTimeout(applyPatch,500); // after DOM updates
+    }
+
+    // Hook common events
+    window.addEventListener('load', delayedPatch);
+    document.addEventListener('dataUpdated', delayedPatch); // custom event
+    const originalUpdateUI = window.updateUI;
+    if (typeof originalUpdateUI==='function'){
+        window.updateUI = function(){
+            originalUpdateUI.apply(this,arguments);
+            delayedPatch();
+        }
+    }
+})();
