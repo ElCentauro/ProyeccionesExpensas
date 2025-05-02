@@ -698,7 +698,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  ipcCell.textContent = `${ipcVal}%`;
                  ipcCell.classList.add('number-cell'); // Center align percentage
 
-                 // Cuota IPC s/Gs - Use pre-calculated value
+                 // Cuota IPC ($) - Use pre-calculated value
                  const cuotaIpcCell = row.insertCell();
                  cuotaIpcCell.textContent = formatCurrency(calculated.cuotaIpcMes?.[i] || 0);
                  cuotaIpcCell.classList.add('number-cell', 'estimated-month-cell'); // Mark as calculated/estimated
@@ -965,7 +965,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 yAxisID: 'yCuota' // Same axis for direct comparison
                             },
                              { // Cuota IPC (Calculated based on Cuota s/Gtos and IPC ref)
-                                label: 'Cuota IPC s/Gs',
+                                label: 'Cuota IPC ($)',
                                 data: calculated.cuotaIpcMes,
                                 borderColor: secondaryColor, // Use secondary color
                                 backgroundColor: hexToRgba(secondaryColor, 0.1),
@@ -2936,3 +2936,68 @@ function toggleAllRubrosWithEmoji(type, button) {
     button.textContent = newCollapsedState ? "▶️" : "🔽";
     updateUI();
 }
+
+
+
+/* ===  PARCHE: título + nueva columna Cuota Real × IPC  === */
+(function () {
+    const NEW_COL_TITLE   = 'Cuota Real × IPC';
+    const IPC_TITLE_OLD   = 'Cuota IPC ($)';
+    const IPC_TITLE_NEW   = 'Cuota IPC s/Gs';
+
+    // Enganchamos después de cada updateUI
+    const originalUpdateUI = window.updateUI || function(){};
+    window.updateUI = function () {
+        originalUpdateUI.apply(this, arguments);
+        setTimeout(applyPatch, 0); // deja que el DOM se refresque
+    };
+
+    function applyPatch() {
+        const resumenTable = document.querySelector('#resumen-mensual-general table');
+        if (!resumenTable) return;
+
+        // ---- 1) Renombrar cabecera ----
+        const ths = resumenTable.querySelectorAll('thead th');
+        let ipcIndex = -1;
+        ths.forEach((th, idx) => {
+            if (th.textContent.trim() === IPC_TITLE_OLD) {
+                th.textContent = IPC_TITLE_NEW;
+                ipcIndex = idx;
+            }
+        });
+        if (ipcIndex === -1) return; // no encontró cabecera → salimos
+
+        // Si la columna nueva ya existe, no duplicamos
+        const exists = Array.from(ths).some(th => th.textContent.trim() === NEW_COL_TITLE);
+        if (!exists) {
+            // Insertamos cabecera
+            const newTh = document.createElement('th');
+            newTh.textContent = NEW_COL_TITLE;
+            ths[ipcIndex].after(newTh);
+
+            // ---- 2) Generar datos ----
+            const expReal = (window.calculated?.cuotaRealBaseMes) || [];
+            const ipcPct  = (window.scenarioData?.parametros?.ipcPorcentaje) || [];
+
+            const cuotaRealXIPCMes = Array(12).fill(0);
+            if (expReal.length) {
+                cuotaRealXIPCMes[0] = (expReal[0] || 0) * (ipcPct[0] || 0) / 100;
+                for (let m = 1; m < 12; m++) {
+                    const prev = cuotaRealXIPCMes[m - 1];
+                    const ipc  = (ipcPct[m] || 0) / 100;
+                    cuotaRealXIPCMes[m] = prev + (prev * ipc);
+                }
+            }
+
+            // ---- 3) Insertar celdas fila por fila ----
+            const bodyRows = resumenTable.querySelectorAll('tbody tr');
+            bodyRows.forEach((tr, idx) => {
+                const cell = document.createElement('td');
+                cell.textContent = typeof formatCurrency === 'function'
+                    ? formatCurrency(cuotaRealXIPCMes[idx] || 0)
+                    : (cuotaRealXIPCMes[idx] || 0).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
+                tr.children[ipcIndex].after(cell);
+            });
+        }
+    }
+})();
