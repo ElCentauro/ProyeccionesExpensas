@@ -372,14 +372,14 @@ document.addEventListener('DOMContentLoaded', () => {
                      // Store BASE values in 'ingresoAjustado' for the detail table display
                      calculated.ingresoAjustado[rubro][detail] = baseValues.map(v => parseFloat(v || 0));
 
-                     // --- Store Base for Expensa Real --- MODIFICADO
-                     // If this is the primary cuota rubro AND the first detail, store its base values
-                     if (rubro === CUOTA_RUBRO_NAME && detail === detailOrder[0]) {
-                         for (let i = 0; i < 12; i++){
-                            calculated.cuotaRealBaseMes[i] = parseFloat(baseValues[i] || 0);
-                         }
-                     }
-                     // --- End Store Base ---
+                     // --- Store Base for Expensa Real (FIX 2025-05-02) ---
+// Suma todas las filas del rubro "Expensas Ordinarias" sin multiplicar por UF
+if (rubro === CUOTA_RUBRO_NAME) {
+    for (let i = 0; i < 12; i++) {
+        calculated.cuotaRealBaseMes[i] += parseFloat(baseValues[i] || 0);
+    }
+}
+// --- End Store Base ---
 
                      // Calculate the contribution of this detail's BASE value to the monthly rubro total (before UF mult)
                      for (let i = 0; i < 12; i++) {
