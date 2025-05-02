@@ -2265,7 +2265,7 @@ const gastoData = gastoPairs.map(p => p.value);
                      // calculateAll handles success message
                      calculateAll(scenarioData);
                  } else {
-                     showSnackbar("Configuración guardada, pero no hay escenario activo para recalcular.", false, 'warning');
+                     if(scenarioData){calculateAll(scenarioData);} showSnackbar("Configuración guardada, pero no hay escenario activo para recalcular.", false, 'warning');
                  }
              } else {
                  showSnackbar("Configuración guardada (sin cambios que requieran recálculo).", false, 'success');
