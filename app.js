@@ -1,4 +1,3 @@
-
 Chart.defaults.plugins.legend.labels.boxWidth = 20;
 Chart.defaults.plugins.legend.labels.boxHeight = 10;
 Chart.defaults.plugins.legend.labels.color = '#333';
@@ -2971,3 +2970,76 @@ function debugExpensaReal(scenarioData){
     return calculatedDebug;
 }
 // === END DEBUG BLOCK ===
+
+// === Funciones Faltantes (Requeridas para funcionamiento) ===
+
+function getDefaultAppState() {
+    return {
+        currentYear: new Date().getFullYear(),
+        activeScenarioKey: null,
+        settings: {
+            cantidadUnidades: 1,
+            rubros: {
+                gastos: [],
+                ingresos: []
+            },
+            rubroConfig: {},
+            coefficientTypes: {
+                None: {
+                    name: "Sin Coeficiente",
+                    values: Array(12).fill(1),
+                    isDefault: true
+                }
+            },
+            ipcManual: Array(12).fill(0)
+        },
+        scenarios: {},
+        uiState: {
+            editingCoefficientType: null
+        }
+    };
+}
+
+function loadState() {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            appState = JSON.parse(saved);
+            console.log("Estado cargado desde localStorage.");
+        } else {
+            console.log("No se encontró estado guardado, usando por defecto.");
+        }
+    } catch (e) {
+        console.error("Error al cargar estado desde localStorage:", e);
+        showSnackbar("Error al cargar datos. Se reiniciará la aplicación.", true, 'error');
+        appState = getDefaultAppState();
+        saveState();
+    }
+}
+
+function saveState() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        console.log("Estado guardado correctamente.");
+    } catch (e) {
+        console.error("Error al guardar estado:", e);
+        showSnackbar("No se pudo guardar el estado. Revisa el espacio en el navegador.", true, 'error');
+    }
+}
+
+function showSnackbar(message, isError = false, type = 'info', duration = 3000) {
+    const snackbar = document.getElementById("snackbar");
+    if (!snackbar) return;
+    snackbar.className = "show " + (isError ? "error" : type);
+    snackbar.textContent = message;
+    setTimeout(() => snackbar.className = snackbar.className.replace("show", ""), duration);
+}
+
+function addEventListeners() {
+    console.log("Agregando listeners de eventos...");
+    // Placeholder - implementá aquí tus event listeners reales si no estaban ya definidos
+    document.querySelectorAll('[data-action="recalculate"]').forEach(btn =>
+        btn.addEventListener("click", recalculateEstimates)
+    );
+    // Agregar más eventos según necesidades
+}
