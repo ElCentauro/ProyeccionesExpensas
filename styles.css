@@ -19,7 +19,7 @@ h1, h2, h3, h4, h5 {
     margin-bottom: 10px;
 }
 
-/* Botones modernos */
+/* Botones generales */
 button {
     background: linear-gradient(135deg, #1d3557, #457b9d);
     color: white;
@@ -32,8 +32,25 @@ button {
     transition: background 0.3s ease;
 }
 
-button:hover {
+button:hover,
+button:focus {
     background: linear-gradient(135deg, #457b9d, #1d3557);
+    outline: 2px solid #457b9d;
+    outline-offset: 2px;
+}
+
+/* Botones por tipo */
+.button-danger {
+    background: linear-gradient(135deg, #e63946, #d90429);
+}
+.button-warning {
+    background: linear-gradient(135deg, #ffb703, #fb8500);
+}
+.button-success {
+    background: linear-gradient(135deg, #2a9d8f, #219ebc);
+}
+.button-info {
+    background: linear-gradient(135deg, #3a86ff, #00b4d8);
 }
 
 /* Tablas limpias y modernas */
@@ -97,6 +114,14 @@ canvas {
     height: auto;
 }
 
+/* Colores para meses reales y estimados */
+.real-month {
+    background-color: #d4f8d4; /* verde claro */
+}
+.estimated-month {
+    background-color: #fff3cd; /* amarillo claro */
+}
+
 /* Emoji toggle buttons */
 #toggle-gastos, #toggle-ingresos {
     font-size: 1.2rem;
@@ -105,4 +130,20 @@ canvas {
     color: #1d3557;
     cursor: pointer;
     margin-left: 10px;
+}
+
+/* Responsive para pantallas pequeñas */
+@media (max-width: 768px) {
+    table, th, td {
+        font-size: 0.85rem;
+    }
+
+    button {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+
+    .chart-box {
+        padding: 15px;
+    }
 }
