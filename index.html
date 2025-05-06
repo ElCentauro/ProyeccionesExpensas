@@ -2758,41 +2758,40 @@ if (window.Chart && !Chart.registry.plugins.get('doughnutShadow3D')) {
                      calculateAll(scenarioData); // This also saves state and updates UI
                      showSnackbar("Datos del Excel cargados y procesados.", false, 'success');
 
-        // === Cálculo de Expensa Real $ por UF y Cuota IPC $ acumulado ===
+        // === Cargar Expensa Real $ desde hoja Ingresos (Expensas Ordinarias) ===
+        const ingresos = window.appState?.ingresos || [];
         const resumenMensual = window.appState?.resumenMensual || [];
-        const ufInput = document.getElementById("cantidad-unidades");
-        const uf = parseFloat(ufInput?.value || 1);
 
-        if (resumenMensual.length > 0 && uf > 0) {
-            resumenMensual.forEach(row => {
-                if (row["Expensa Real $"]) {
-                    let original = row["Expensa Real $"]
-                        .toString()
-                        .replace(/\./g, "")
-                        .replace(",", ".")
-                        .replace(/[^0-9.]/g, "");
-                    const valor = parseFloat(original);
-                    if (!isNaN(valor)) {
-                        row["Expensa Real $"] = (valor / uf).toFixed(2);
-                    }
+        const filaExpOrd = ingresos.find(r =>
+            (r.rubro || '').toString().toLowerCase().trim() === 'expensas ordinarias' &&
+            (r.detalle || '').toString().toLowerCase().trim() === 'expensas ordinarias'
+        );
+
+        if (filaExpOrd) {
+            const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+            meses.forEach((mes, idx) => {
+                const valorStr = filaExpOrd[mes] || "0";
+                const valor = parseFloat(
+                    valorStr.toString().replace(/\./g, "").replace(",", ".").replace(/[^0-9.]/g, "")
+                );
+                if (!isNaN(valor)) {
+                    if (!resumenMensual[idx]) resumenMensual[idx] = {};
+                    resumenMensual[idx]["Expensa Real $"] = valor.toFixed(2);
                 }
             });
+        }
 
+        // === Calcular Cuota IPC $ acumulado desde Expensa Real $ Enero ===
+        if (resumenMensual.length > 0) {
             let ipcAcumulado = 1;
             const baseInicialStr = resumenMensual[0]["Expensa Real $"]
-                .toString()
-                .replace(/\./g, "")
-                .replace(",", ".")
-                .replace(/[^0-9.]/g, "");
+                ?.toString().replace(/\./g, "").replace(",", ".").replace(/[^0-9.]/g, "");
             const baseInicial = parseFloat(baseInicialStr);
 
             if (!isNaN(baseInicial)) {
                 for (let i = 0; i < resumenMensual.length; i++) {
                     const ipcStr = resumenMensual[i]["IPC (%)"]
-                        .toString()
-                        .replace("%", "")
-                        .replace(",", ".")
-                        .trim();
+                        ?.toString().replace("%", "").replace(",", ".").trim();
                     const ipc = parseFloat(ipcStr);
                     if (!isNaN(ipc)) {
                         ipcAcumulado *= 1 + (ipc / 100);
