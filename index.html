@@ -2756,11 +2756,8 @@ if (window.Chart && !Chart.registry.plugins.get('doughnutShadow3D')) {
 
                      // Recalculate everything after processing the data
                      calculateAll(scenarioData); // This also saves state and updates UI
-                     showSnackbar("Datos del Excel cargados y procesados.", false, 'success');
-
-        // === Cargar Expensa Real $ desde hoja Ingresos (Expensas Ordinarias) ===
+                     
         const ingresos = window.appState?.ingresos || [];
-        const resumenMensual = window.appState?.resumenMensual || [];
 
         const filaExpOrd = ingresos.find(r =>
             (r.rubro || '').toString().toLowerCase().trim() === 'expensas ordinarias' &&
@@ -2769,9 +2766,8 @@ if (window.Chart && !Chart.registry.plugins.get('doughnutShadow3D')) {
 
         const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
-        for (let i = 0; i < 12; i++) {
-            if (!resumenMensual[i]) resumenMensual[i] = {};
-        }
+        window.appState.cuotaRealBaseMes = [];
+        window.appState.cuotaIpcMes = [];
 
         if (filaExpOrd) {
             meses.forEach((mes, idx) => {
@@ -2779,32 +2775,29 @@ if (window.Chart && !Chart.registry.plugins.get('doughnutShadow3D')) {
                 const valor = parseFloat(
                     valorStr.toString().replace(/\./g, "").replace(",", ".").replace(/[^0-9.]/g, "")
                 );
-                if (!isNaN(valor)) {
-                    resumenMensual[idx]["Expensa Real $"] = valor.toFixed(2);
-                }
+                window.appState.cuotaRealBaseMes[idx] = isNaN(valor) ? 0 : valor;
             });
-        }
 
-        // === Calcular Cuota IPC $ acumulado desde Expensa Real $ Enero ===
-        let ipcAcumulado = 1;
-        const baseInicialStr = resumenMensual[0]["Expensa Real $"]
-            ?.toString().replace(/\./g, "").replace(",", ".").replace(/[^0-9.]/g, "");
-        const baseInicial = parseFloat(baseInicialStr);
-
-        if (!isNaN(baseInicial)) {
-            for (let i = 0; i < resumenMensual.length; i++) {
-                const ipcStr = resumenMensual[i]["IPC (%)"]
-                    ?.toString().replace("%", "").replace(",", ".").trim();
+            // Calcular Cuota IPC $ acumulada desde Enero
+            let ipcAcumulado = 1;
+            const base = window.appState.cuotaRealBaseMes[0];
+            for (let i = 0; i < 12; i++) {
+                const ipcStr = (window.appState.ipcManual?.[i] || "0")
+                    .toString().replace("%", "").replace(",", ".").trim();
                 const ipc = parseFloat(ipcStr);
                 if (!isNaN(ipc)) {
                     ipcAcumulado *= 1 + (ipc / 100);
-                    resumenMensual[i]["Cuota IPC $"] = (baseInicial * ipcAcumulado).toFixed(2);
+                    window.appState.cuotaIpcMes[i] = parseFloat((base * ipcAcumulado).toFixed(2));
+                } else {
+                    window.appState.cuotaIpcMes[i] = 0;
                 }
             }
         }
 
-        console.table(resumenMensual);
+        console.log("✔️ cuotaRealBaseMes:", window.appState.cuotaRealBaseMes);
+        console.log("✔️ cuotaIpcMes:", window.appState.cuotaIpcMes);
 
+showSnackbar("Datos del Excel cargados y procesados.", false, 'success');
 
                  } catch (error) {
                      console.error("Error procesando archivo Excel:", error);
