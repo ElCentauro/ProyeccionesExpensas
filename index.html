@@ -2757,6 +2757,8 @@ if (window.Chart && !Chart.registry.plugins.get('doughnutShadow3D')) {
                      // Recalculate everything after processing the data
                      calculateAll(scenarioData); // This also saves state and updates UI
                      
+        if (!window.appState) window.appState = {};
+
         const ingresos = window.appState?.ingresos || [];
 
         const filaExpOrd = ingresos.find(r =>
@@ -2778,7 +2780,6 @@ if (window.Chart && !Chart.registry.plugins.get('doughnutShadow3D')) {
                 window.appState.cuotaRealBaseMes[idx] = isNaN(valor) ? 0 : valor;
             });
 
-            // Calcular Cuota IPC $ acumulada desde Enero
             let ipcAcumulado = 1;
             const base = window.appState.cuotaRealBaseMes[0];
             for (let i = 0; i < 12; i++) {
