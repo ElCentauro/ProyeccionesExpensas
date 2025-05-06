@@ -2767,39 +2767,43 @@ if (window.Chart && !Chart.registry.plugins.get('doughnutShadow3D')) {
             (r.detalle || '').toString().toLowerCase().trim() === 'expensas ordinarias'
         );
 
+        const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+        for (let i = 0; i < 12; i++) {
+            if (!resumenMensual[i]) resumenMensual[i] = {};
+        }
+
         if (filaExpOrd) {
-            const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
             meses.forEach((mes, idx) => {
                 const valorStr = filaExpOrd[mes] || "0";
                 const valor = parseFloat(
                     valorStr.toString().replace(/\./g, "").replace(",", ".").replace(/[^0-9.]/g, "")
                 );
                 if (!isNaN(valor)) {
-                    if (!resumenMensual[idx]) resumenMensual[idx] = {};
                     resumenMensual[idx]["Expensa Real $"] = valor.toFixed(2);
                 }
             });
         }
 
         // === Calcular Cuota IPC $ acumulado desde Expensa Real $ Enero ===
-        if (resumenMensual.length > 0) {
-            let ipcAcumulado = 1;
-            const baseInicialStr = resumenMensual[0]["Expensa Real $"]
-                ?.toString().replace(/\./g, "").replace(",", ".").replace(/[^0-9.]/g, "");
-            const baseInicial = parseFloat(baseInicialStr);
+        let ipcAcumulado = 1;
+        const baseInicialStr = resumenMensual[0]["Expensa Real $"]
+            ?.toString().replace(/\./g, "").replace(",", ".").replace(/[^0-9.]/g, "");
+        const baseInicial = parseFloat(baseInicialStr);
 
-            if (!isNaN(baseInicial)) {
-                for (let i = 0; i < resumenMensual.length; i++) {
-                    const ipcStr = resumenMensual[i]["IPC (%)"]
-                        ?.toString().replace("%", "").replace(",", ".").trim();
-                    const ipc = parseFloat(ipcStr);
-                    if (!isNaN(ipc)) {
-                        ipcAcumulado *= 1 + (ipc / 100);
-                        resumenMensual[i]["Cuota IPC $"] = (baseInicial * ipcAcumulado).toFixed(2);
-                    }
+        if (!isNaN(baseInicial)) {
+            for (let i = 0; i < resumenMensual.length; i++) {
+                const ipcStr = resumenMensual[i]["IPC (%)"]
+                    ?.toString().replace("%", "").replace(",", ".").trim();
+                const ipc = parseFloat(ipcStr);
+                if (!isNaN(ipc)) {
+                    ipcAcumulado *= 1 + (ipc / 100);
+                    resumenMensual[i]["Cuota IPC $"] = (baseInicial * ipcAcumulado).toFixed(2);
                 }
             }
         }
+
+        console.table(resumenMensual);
 
 
                  } catch (error) {
