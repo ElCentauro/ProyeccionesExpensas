@@ -3835,7 +3835,7 @@ function openTab(evt, tabName) {
 // --- Cálculo de Expensa Real $ por UF y Cuota IPC acumulado ---
 document.addEventListener('DOMContentLoaded', () => {
     const resumenMensual = window.appState?.resumenMensual || [];
-    const ufInput = document.getElementById("config-uf");
+    const ufInput = document.getElementById("cantidad-unidades");
     const uf = parseFloat(ufInput?.value || 1);
 
     if (uf > 0) {
