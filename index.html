@@ -2758,6 +2758,51 @@ if (window.Chart && !Chart.registry.plugins.get('doughnutShadow3D')) {
                      calculateAll(scenarioData); // This also saves state and updates UI
                      showSnackbar("Datos del Excel cargados y procesados.", false, 'success');
 
+        // === Cálculo de Expensa Real $ por UF y Cuota IPC $ acumulado ===
+        const resumenMensual = window.appState?.resumenMensual || [];
+        const ufInput = document.getElementById("cantidad-unidades");
+        const uf = parseFloat(ufInput?.value || 1);
+
+        if (resumenMensual.length > 0 && uf > 0) {
+            resumenMensual.forEach(row => {
+                if (row["Expensa Real $"]) {
+                    let original = row["Expensa Real $"]
+                        .toString()
+                        .replace(/\./g, "")
+                        .replace(",", ".")
+                        .replace(/[^0-9.]/g, "");
+                    const valor = parseFloat(original);
+                    if (!isNaN(valor)) {
+                        row["Expensa Real $"] = (valor / uf).toFixed(2);
+                    }
+                }
+            });
+
+            let ipcAcumulado = 1;
+            const baseInicialStr = resumenMensual[0]["Expensa Real $"]
+                .toString()
+                .replace(/\./g, "")
+                .replace(",", ".")
+                .replace(/[^0-9.]/g, "");
+            const baseInicial = parseFloat(baseInicialStr);
+
+            if (!isNaN(baseInicial)) {
+                for (let i = 0; i < resumenMensual.length; i++) {
+                    const ipcStr = resumenMensual[i]["IPC (%)"]
+                        .toString()
+                        .replace("%", "")
+                        .replace(",", ".")
+                        .trim();
+                    const ipc = parseFloat(ipcStr);
+                    if (!isNaN(ipc)) {
+                        ipcAcumulado *= 1 + (ipc / 100);
+                        resumenMensual[i]["Cuota IPC $"] = (baseInicial * ipcAcumulado).toFixed(2);
+                    }
+                }
+            }
+        }
+
+
                  } catch (error) {
                      console.error("Error procesando archivo Excel:", error);
                      feedbackDiv.textContent = `Error: ${error.message}`;
