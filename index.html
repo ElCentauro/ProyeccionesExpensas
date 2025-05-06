@@ -749,32 +749,7 @@ if (window.Chart && !Chart.registry.plugins.get('doughnutShadow3D')) {
 
         // --- Inicialización ---
         document.addEventListener('DOMContentLoaded', () => {
-            console.log(`DOM Cargado. Inicializando App ${
-
-// --- Cálculo de Expensa Real $ por UF ---
-const uf = parseFloat(document.getElementById("config-uf")?.value || 1); // Asume que hay un input con ID config-uf
-if (uf > 0) {
-    resumenMensual.forEach(row => {
-        if (row["Expensa Real $"]) {
-            row["Expensa Real $"] = (parseFloat(row["Expensa Real $"]) / uf).toFixed(2);
-        }
-    });
-}
-
-// --- Cálculo de Cuota IPC $ Acumulado ---
-let ipcAcumulado = 1;
-for (let i = 0; i < resumenMensual.length; i++) {
-    const row = resumenMensual[i];
-    const ipc = parseFloat(row["IPC (%)"]) || 0;
-    ipcAcumulado *= 1 + (ipc / 100);
-
-    if (i === 0) {
-        row["Cuota IPC $"] = (parseFloat(row["Expensa Real $"]) * ipcAcumulado).toFixed(2);
-    } else {
-        row["Cuota IPC $"] = (parseFloat(resumenMensual[0]["Expensa Real $"]) * ipcAcumulado).toFixed(2);
-    }
-}
-STORAGE_KEY}...`);
+            console.log(`DOM Cargado. Inicializando App ${STORAGE_KEY}...`);
             loadState(); // Cargar estado guardado si existe
             initTheme(); // Aplicar tema (antes de cualquier render que dependa de él)
 
@@ -3783,31 +3758,6 @@ document.addEventListener('DOMContentLoaded', initRubrosToggle);
   const ABBR = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 
   function findMonthIndex(key){
-
-// --- Cálculo de Expensa Real $ por UF ---
-const uf = parseFloat(document.getElementById("config-uf")?.value || 1); // Asume que hay un input con ID config-uf
-if (uf > 0) {
-    resumenMensual.forEach(row => {
-        if (row["Expensa Real $"]) {
-            row["Expensa Real $"] = (parseFloat(row["Expensa Real $"]) / uf).toFixed(2);
-        }
-    });
-}
-
-// --- Cálculo de Cuota IPC $ Acumulado ---
-let ipcAcumulado = 1;
-for (let i = 0; i < resumenMensual.length; i++) {
-    const row = resumenMensual[i];
-    const ipc = parseFloat(row["IPC (%)"]) || 0;
-    ipcAcumulado *= 1 + (ipc / 100);
-
-    if (i === 0) {
-        row["Cuota IPC $"] = (parseFloat(row["Expensa Real $"]) * ipcAcumulado).toFixed(2);
-    } else {
-        row["Cuota IPC $"] = (parseFloat(resumenMensual[0]["Expensa Real $"]) * ipcAcumulado).toFixed(2);
-    }
-}
-
      key = key.toLowerCase().trim();
      if(key.match(/^m\d+$/)) return parseInt(key.slice(1))-1;
      let idx = FULL.indexOf(key);
@@ -3864,6 +3814,48 @@ for (let i = 0; i < resumenMensual.length; i++) {
 })();
 </script>
 
+
+<script>
+function openTab(evt, tabName) {
+    const tabContents = document.querySelectorAll(".tab-content");
+    const tabLinks = document.querySelectorAll(".tab-link");
+
+    tabContents.forEach(el => el.style.display = "none");
+    tabLinks.forEach(el => el.classList.remove("active"));
+
+    const tab = document.getElementById(tabName);
+    if (tab) {
+        tab.style.display = "block";
+    }
+    evt.currentTarget.classList.add("active");
+}
+</script>
+
+<script>
+// --- Cálculo de Expensa Real $ por UF y Cuota IPC acumulado ---
+document.addEventListener('DOMContentLoaded', () => {
+    const resumenMensual = window.appState?.resumenMensual || [];
+    const ufInput = document.getElementById("config-uf");
+    const uf = parseFloat(ufInput?.value || 1);
+
+    if (uf > 0) {
+        resumenMensual.forEach(row => {
+            if (row["Expensa Real $"]) {
+                row["Expensa Real $"] = (parseFloat(row["Expensa Real $"]) / uf).toFixed(2);
+            }
+        });
+    }
+
+    let ipcAcumulado = 1;
+    for (let i = 0; i < resumenMensual.length; i++) {
+        const row = resumenMensual[i];
+        const ipc = parseFloat(row["IPC (%)"]) || 0;
+        ipcAcumulado *= 1 + (ipc / 100);
+        row["Cuota IPC $"] = (parseFloat(resumenMensual[0]["Expensa Real $"]) * ipcAcumulado).toFixed(2);
+    }
+});
+
+</script>
 </body>
 </html>
 
