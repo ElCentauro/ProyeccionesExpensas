@@ -1146,7 +1146,28 @@ if (window.Chart && !Chart.registry.plugins.get('doughnutShadow3D')) {
              }
 
 
-             // 5. Cuota IPC usando Expensa Real (Enero) como base y acumulando IPC mes a mes
+             
+        // === Cargar cuotaRealBaseMes desde hoja Ingresos (Expensas Ordinarias) ===
+        if (!appState || !appState.ingresos) {
+            console.warn("No se encontraron datos en appState.ingresos.");
+        } else {
+            const fila = appState.ingresos.find(r =>
+                (r.rubro || '').toString().toLowerCase().trim() === 'expensas ordinarias' &&
+                (r.detalle || '').toString().toLowerCase().trim() === 'expensas ordinarias'
+            );
+            if (fila) {
+                const MONTHS_KEYS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+                calculated.cuotaRealBaseMes = MONTHS_KEYS.map(mes => {
+                    const val = fila[mes] || "0";
+                    return parseFloat(val.toString().replace(/\./g, '').replace(',', '.')) || 0;
+                });
+                calculated.annualTotals.cuotaRealBase = calculated.cuotaRealBaseMes.reduce((a,b)=>a+b,0);
+                console.log("✔️ cuotaRealBaseMes actualizada desde Ingresos (Expensas Ordinarias).");
+            }
+        }
+
+
+        // 5. Cuota IPC usando Expensa Real (Enero) como base y acumulando IPC mes a mes
              {
                  const baseEnero = (calculated.cuotaRealBaseMes?.[0] || 0);
                  const ipcEnero  = parseFloat(calculated.ipcManual?.[0] || 0);
@@ -2756,49 +2777,7 @@ if (window.Chart && !Chart.registry.plugins.get('doughnutShadow3D')) {
 
                      // Recalculate everything after processing the data
                      calculateAll(scenarioData); // This also saves state and updates UI
-                     
-        if (!window.appState) window.appState = {};
-
-        const ingresos = window.appState?.ingresos || [];
-
-        const filaExpOrd = ingresos.find(r =>
-            (r.rubro || '').toString().toLowerCase().trim() === 'expensas ordinarias' &&
-            (r.detalle || '').toString().toLowerCase().trim() === 'expensas ordinarias'
-        );
-
-        const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-
-        window.appState.cuotaRealBaseMes = [];
-        window.appState.cuotaIpcMes = [];
-
-        if (filaExpOrd) {
-            meses.forEach((mes, idx) => {
-                const valorStr = filaExpOrd[mes] || "0";
-                const valor = parseFloat(
-                    valorStr.toString().replace(/\./g, "").replace(",", ".").replace(/[^0-9.]/g, "")
-                );
-                window.appState.cuotaRealBaseMes[idx] = isNaN(valor) ? 0 : valor;
-            });
-
-            let ipcAcumulado = 1;
-            const base = window.appState.cuotaRealBaseMes[0];
-            for (let i = 0; i < 12; i++) {
-                const ipcStr = (window.appState.ipcManual?.[i] || "0")
-                    .toString().replace("%", "").replace(",", ".").trim();
-                const ipc = parseFloat(ipcStr);
-                if (!isNaN(ipc)) {
-                    ipcAcumulado *= 1 + (ipc / 100);
-                    window.appState.cuotaIpcMes[i] = parseFloat((base * ipcAcumulado).toFixed(2));
-                } else {
-                    window.appState.cuotaIpcMes[i] = 0;
-                }
-            }
-        }
-
-        console.log("✔️ cuotaRealBaseMes:", window.appState.cuotaRealBaseMes);
-        console.log("✔️ cuotaIpcMes:", window.appState.cuotaIpcMes);
-
-showSnackbar("Datos del Excel cargados y procesados.", false, 'success');
+                     showSnackbar("Datos del Excel cargados y procesados.", false, 'success');
 
                  } catch (error) {
                      console.error("Error procesando archivo Excel:", error);
