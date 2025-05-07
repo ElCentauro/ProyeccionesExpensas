@@ -1190,13 +1190,12 @@ if (window.Chart && !Chart.registry.plugins.get('doughnutShadow3D')) {
 
 
              console.log("Recálculo Finalizado.", calculated);
-             saveState(); // Save state after successful calculation
-             updateUI(); // Update the display
-             showSnackbar("Cálculos actualizados correctamente.", false, 'success');
-        }
+saveState(); // Save state after successful calculation
+updateUI();  // Update the display
+showSnackbar("Cálculos actualizados correctamente.", false, 'success');
 
-        // --- Recalcular Estimados (ACUMULATIVO) ---
-        function recalculateEstimates() {
+/ --- Recalcular Estimados (ACUMULATIVO) ---
+function recalculateEstimates() {
             const scenarioData = getCurrentScenarioData();
             if (!scenarioData) { showSnackbar("No hay escenario activo para calcular estimados.", true, 'error'); return; }
             console.log(`Calculando estimados (Acumulativo) para: ${scenarioData.scenarioName}`);
